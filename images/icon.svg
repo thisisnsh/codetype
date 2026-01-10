@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1e1e"/>
+      <stop offset="100%" style="stop-color:#2d2d30"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="128" height="128" rx="16" fill="url(#bg)"/>
+
+  <!-- Code brackets -->
+  <text x="20" y="78" font-family="monospace" font-size="48" font-weight="bold" fill="#569cd6">{</text>
+  <text x="88" y="78" font-family="monospace" font-size="48" font-weight="bold" fill="#569cd6">}</text>
+
+  <!-- Cursor line -->
+  <rect x="52" y="45" width="24" height="4" rx="2" fill="#4ec9b0"/>
+  <rect x="52" y="55" width="20" height="4" rx="2" fill="#808080"/>
+  <rect x="52" y="65" width="28" height="4" rx="2" fill="#808080"/>
+  <rect x="52" y="75" width="16" height="4" rx="2" fill="#808080"/>
+
+  <!-- Typing cursor -->
+  <rect x="76" y="43" width="3" height="10" fill="#4ec9b0">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+</svg>
