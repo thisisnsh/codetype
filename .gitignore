@@ -1,8 +1,15 @@
-out/
-node_modules/
-*.vsix
-.vscode-test/
+# VSCode Extension
+codetype-vscode/out/
+codetype-vscode/node_modules/
+codetype-vscode/*.vsix
+codetype-vscode/.vscode-test/
+codetype-vscode/worker/node_modules/
+codetype-vscode/worker/.wrangler/
+
+# Website
+codetype-website/node_modules/
+codetype-website/_site/
+
+# General
 *.log
 .DS_Store
-worker/node_modules/
-worker/.wrangler/

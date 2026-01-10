@@ -6,11 +6,10 @@
 </p>
 
 <p align="center">
+  <a href="#why-codetype">Why CodeType?</a> •
   <a href="#features">Features</a> •
   <a href="#installation">Installation</a> •
-  <a href="#usage">Usage</a> •
-  <a href="#multiplayer">Multiplayer</a> •
-  <a href="#development">Development</a> •
+  <a href="#project-structure">Project Structure</a> •
   <a href="#contributing">Contributing</a>
 </p>
 
@@ -43,120 +42,46 @@
 
 ```bash
 git clone https://github.com/yourusername/codetype.git
-cd codetype
+cd codetype/codetype-vscode
 npm install
 npm run compile
 ```
 
 Press `F5` to launch the Extension Development Host.
 
-## Usage
+## Project Structure
 
-### Quick Start
-
-1. Press `Cmd+Shift+T` (Mac) or `Ctrl+Shift+T` (Windows/Linux)
-2. Select "Quick Solo Game"
-3. Start typing the grey code - it lights up as you type correctly!
-
-### Commands
-
-| Command | Description | Shortcut |
-|---------|-------------|----------|
-| `CodeType: Start Typing Practice` | Open main menu | `Cmd/Ctrl+Shift+T` |
-| `CodeType: Quick Solo Game` | Start solo game | - |
-| `CodeType: Create Multiplayer Room` | Host a game | - |
-| `CodeType: Join Multiplayer Room` | Join with code | - |
-| `CodeType: View Leaderboard` | See rankings | - |
-| `CodeType: View My Stats` | Personal stats | - |
-| `CodeType: Set Username` | Change name | - |
-
-### How It Works
-
-1. **Grey Text**: Untyped code appears in muted grey (like comments)
-2. **Live Highlighting**: Correct characters light up in your theme colors
-3. **Line Numbers**: Authentic VS Code editor styling
-4. **Stats Bar**: WPM, accuracy, and progress shown subtly at the top
-5. **Stealth Title**: Tab shows "utils.ts" instead of "CodeType"
-
-## Multiplayer
-
-### Setting Up the Backend
-
-Multiplayer requires deploying the Cloudflare Worker:
-
-```bash
-cd worker
-npm install
-
-# Create KV namespace
-wrangler kv:namespace create CODETYPE_KV
-# Copy the ID to wrangler.toml
-
-# Deploy
-npm run deploy
-```
-
-Then update `src/api.ts` with your Worker URL.
-
-### Playing with Friends
-
-1. **Host**: Run `CodeType: Create Multiplayer Room`
-2. **Share**: Click the 6-character room code to copy it
-3. **Friends**: Run `CodeType: Join Multiplayer Room` and enter the code
-4. **Race**: Host clicks "Start Game" and everyone types the same code!
-
-## Configuration
-
-| Setting | Default | Description |
-|---------|---------|-------------|
-| `codetype.username` | `""` | Display name for leaderboards |
-| `codetype.theme` | `"stealth"` | UI theme: stealth, minimal, hacker |
-| `codetype.soundEnabled` | `false` | Typing sounds (risky in office!) |
-| `codetype.useWorkspaceCode` | `true` | Use code from your workspace |
-
-## Development
-
-### Project Structure
+This monorepo contains:
 
 ```
 codetype/
-├── src/
-│   ├── extension.ts          # Extension entry point
-│   ├── api.ts                 # Backend API client
-│   ├── codeSamples.ts         # Code snippet provider
-│   ├── utils/
-│   │   └── gameLogic.ts       # Core game logic
-│   ├── webview/
-│   │   └── CodeTypePanel.ts   # Game UI
-│   └── test/
-│       ├── suite/             # Integration tests
-│       └── unit/              # Unit tests
-├── worker/
-│   └── src/index.ts           # Cloudflare Worker
-└── package.json
+├── codetype-vscode/      # VS Code extension
+│   ├── src/              # Extension source code
+│   ├── worker/           # Cloudflare Worker backend
+│   └── package.json
+├── codetype-website/     # Promotional website
+│   ├── src/              # Eleventy source files
+│   └── package.json
+├── README.md             # This file
+├── LICENSE               # MIT License
+├── CONTRIBUTING.md       # Contribution guidelines
+├── CODE_OF_CONDUCT.md    # Community guidelines
+└── SECURITY.md           # Security policy
 ```
 
-### Running Tests
+### VS Code Extension
 
+The main extension lives in `codetype-vscode/`. See [codetype-vscode/CHANGELOG.md](codetype-vscode/CHANGELOG.md) for version history.
+
+### Website
+
+The promotional website is in `codetype-website/`. Built with Eleventy and designed to look like VS Code.
+
+To run locally:
 ```bash
-# All tests (requires VS Code)
-npm test
-
-# Unit tests only
-npm run test:unit
-
-# Watch mode
-npm run watch
-```
-
-### Building
-
-```bash
-# Compile TypeScript
-npm run compile
-
-# Package extension
-vsce package
+cd codetype-website
+npm install
+npm start
 ```
 
 ## Scoring
@@ -195,6 +120,7 @@ MIT License - see [LICENSE](LICENSE) for details.
 - Inspired by [MonkeyType](https://monkeytype.com/) and [TypeRacer](https://play.typeracer.com/)
 - Built with [VS Code Extension API](https://code.visualstudio.com/api)
 - Backend powered by [Cloudflare Workers](https://workers.cloudflare.com/)
+- Website built with [Eleventy](https://www.11ty.dev/)
 
 ---
 
