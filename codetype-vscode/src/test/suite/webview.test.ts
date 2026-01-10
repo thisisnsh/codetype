@@ -20,7 +20,6 @@ suite('WebView UI Test Suite', () => {
             await sleep(500);
 
             // The panel should be named "utils.ts" to look like a normal file
-            const activeEditor = vscode.window.activeTextEditor;
             // WebView panels don't show as activeTextEditor, but command should succeed
             assert.ok(true, 'Panel opened successfully');
         });

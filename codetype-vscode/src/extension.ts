@@ -68,7 +68,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 }
 
-function ensureUserId(context: vscode.ExtensionContext): string {
+function ensureUserId(_context: vscode.ExtensionContext): string {
     const config = vscode.workspace.getConfiguration('codetype');
     let userId = config.get<string>('userId') || '';
 
@@ -91,7 +91,7 @@ async function ensureUsername(context: vscode.ExtensionContext): Promise<string 
     return username;
 }
 
-async function setUsername(context: vscode.ExtensionContext): Promise<string | undefined> {
+async function setUsername(_context: vscode.ExtensionContext): Promise<string | undefined> {
     const config = vscode.workspace.getConfiguration('codetype');
 
     const username = await vscode.window.showInputBox({

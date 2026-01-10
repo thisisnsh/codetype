@@ -156,7 +156,7 @@ suite('Game Logic Unit Tests', () => {
         });
 
         test('should accumulate errors', () => {
-            let state = createGameState('abc');
+            const state = createGameState('abc');
             let result = processCharacter(state, 'x');
             result = processCharacter(result.state, 'y');
             assert.strictEqual(result.state.errors, 2);

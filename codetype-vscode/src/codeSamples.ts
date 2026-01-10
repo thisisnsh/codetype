@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 
 // Bundled code samples for when no workspace is available
 const BUNDLED_SAMPLES = [
