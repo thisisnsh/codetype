@@ -1,0 +1,157 @@
+{
+  "name": "codetype",
+  "displayName": "CodeType",
+  "description": "Speed typing competition disguised as normal coding. Play solo or with friends while looking productive.",
+  "version": "1.0.0",
+  "publisher": "codetype",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/codetype"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/codetype/issues"
+  },
+  "homepage": "https://github.com/yourusername/codetype#readme",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "typing",
+    "game",
+    "productivity",
+    "multiplayer",
+    "typing-game",
+    "speed-typing",
+    "competitive",
+    "vibe-coding"
+  ],
+  "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "activationEvents": [
+    "onCommand:codetype.start",
+    "onCommand:codetype.solo",
+    "onCommand:codetype.createRoom",
+    "onCommand:codetype.joinRoom",
+    "onCommand:codetype.leaderboard",
+    "onCommand:codetype.setUsername",
+    "onCommand:codetype.stats"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "codetype.start",
+        "title": "Start Typing Practice",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.solo",
+        "title": "Quick Solo Game",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.createRoom",
+        "title": "Create Multiplayer Room",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.joinRoom",
+        "title": "Join Multiplayer Room",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.leaderboard",
+        "title": "View Leaderboard",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.setUsername",
+        "title": "Set Username",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.stats",
+        "title": "View My Stats",
+        "category": "CodeType"
+      }
+    ],
+    "configuration": {
+      "title": "CodeType",
+      "properties": {
+        "codetype.username": {
+          "type": "string",
+          "default": "",
+          "description": "Your username for leaderboards"
+        },
+        "codetype.userId": {
+          "type": "string",
+          "default": "",
+          "description": "Your unique user ID (auto-generated)"
+        },
+        "codetype.theme": {
+          "type": "string",
+          "enum": [
+            "stealth",
+            "minimal",
+            "hacker"
+          ],
+          "default": "stealth",
+          "description": "Visual theme for the typing game"
+        },
+        "codetype.soundEnabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable typing sounds (risky in office!)"
+        },
+        "codetype.useWorkspaceCode": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use code from your workspace for typing practice"
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "codetype.start",
+        "key": "ctrl+shift+t",
+        "mac": "cmd+shift+t"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts",
+    "test": "npm run compile && node ./out/test/runTest.js",
+    "test:unit": "npm run compile && mocha --ui tdd ./out/test/unit/**/*.test.js",
+    "pretest": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.10.0",
+    "@types/sinon": "^21.0.0",
+    "@types/uuid": "^10.0.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "@vscode/test-electron": "^2.5.2",
+    "chai": "^6.2.2",
+    "eslint": "^8.54.0",
+    "glob": "^13.0.0",
+    "mocha": "^11.7.5",
+    "sinon": "^21.0.1",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "uuid": "^9.0.0"
+  }
+}

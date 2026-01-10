@@ -1,0 +1,8 @@
+out/
+node_modules/
+*.vsix
+.vscode-test/
+*.log
+.DS_Store
+worker/node_modules/
+worker/.wrangler/

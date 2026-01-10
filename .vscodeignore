@@ -1,0 +1,16 @@
+.vscode/**
+.vscode-test/**
+src/**
+worker/**
+node_modules/**
+.github/**
+.gitignore
+*.map
+**/*.ts
+**/.git/**
+tsconfig.json
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+**/*.test.js
+**/test/**
