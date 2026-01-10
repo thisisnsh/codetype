@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ title }} - CodeType</title>
+  <meta name="description" content="{{ description or 'Speed typing competition disguised as normal coding. Play solo or with friends while looking productive.' }}">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+</head>
+<body>
+  <div class="vscode-window">
+    <!-- Title Bar -->
+    <div class="titlebar">
+      <div class="titlebar-traffic-lights">
+        <div class="traffic-light red"></div>
+        <div class="traffic-light yellow"></div>
+        <div class="traffic-light green"></div>
+      </div>
+      <div class="titlebar-title">CodeType - Visual Studio Code</div>
+      <div class="titlebar-actions"></div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Activity Bar -->
+      <nav class="activity-bar">
+        <a href="#hero" class="activity-icon active" title="Explorer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+        </a>
+        <a href="#features" class="activity-icon" title="Features">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </a>
+        <a href="#download" class="activity-icon" title="Download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7,10 12,15 17,10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </a>
+        <a href="#faq" class="activity-icon" title="FAQ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </a>
+      </nav>
+
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="sidebar-header">Explorer</div>
+        <div class="file-tree">
+          <div class="file-item folder">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+            </svg>
+            <span>codetype</span>
+          </div>
+          <div class="file-item active" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>welcome.ts</span>
+          </div>
+          <div class="file-item" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>features.ts</span>
+          </div>
+          <div class="file-item" style="padding-left: 24px;">
+            <svg class="icon json" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm3.5 11c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm7 0c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm-3.5-1c.83 0 1.5-.67 1.5-1.5 0-.63-.38-1.16-.92-1.38.17-.25.27-.54.27-.87 0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5c0 .33.1.62.27.87-.54.22-.92.75-.92 1.38 0 .83.67 1.5 1.5 1.5z"/>
+            </svg>
+            <span>config.json</span>
+          </div>
+          <div class="file-item" style="padding-left: 24px;">
+            <svg class="icon md" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6h17.12c.79 0 1.44.63 1.44 1.41v9.18c0 .78-.65 1.41-1.44 1.41zM6.81 15.19v-3.66l1.92 2.35 1.92-2.35v3.66h1.93V8.81h-1.93l-1.92 2.35-1.92-2.35H4.89v6.38h1.92zm10.89-4.22h-1.93v1.92h1.93v1.93h1.93v-1.93h1.93v-1.92h-1.93V9.04h-1.93v1.93z"/>
+            </svg>
+            <span>README.md</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Editor Area -->
+      <main class="editor-area">
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+          <div class="tab active">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="#519aba">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>welcome.ts</span>
+            <span class="tab-close">&times;</span>
+          </div>
+        </div>
+
+        <!-- Breadcrumb -->
+        <div class="breadcrumb">
+          <span>codetype</span> &gt; <span>welcome.ts</span>
+        </div>
+
+        <!-- Editor Content -->
+        <div class="editor-content">
+          {{ content | safe }}
+        </div>
+      </main>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="status-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          main
+        </span>
+        <span class="status-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          0 errors
+        </span>
+      </div>
+      <div class="status-right">
+        <span class="status-item">TypeScript</span>
+        <span class="status-item">UTF-8</span>
+        <span class="status-item">Ln 1, Col 1</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>

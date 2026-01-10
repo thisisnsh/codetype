@@ -1,0 +1,460 @@
+---
+title: Welcome
+layout: base.njk
+---
+
+<!-- Hero Section -->
+<section id="hero" class="hero-section">
+  <div class="hero-badge">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+    </svg>
+    VS Code Extension
+  </div>
+
+  <h1 class="hero-title">CodeType</h1>
+  <p class="hero-subtitle">
+    Speed typing competition disguised as normal coding. Play solo or with friends while looking productive.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#download" class="btn btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+        <polyline points="7,10 12,15 17,10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg>
+      Install Extension
+    </a>
+    <a href="https://github.com/codetype/codetype" class="btn btn-secondary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+      </svg>
+      View on GitHub
+    </a>
+  </div>
+
+  <!-- Interactive Demo -->
+  <div class="demo-container glow">
+    <div class="demo-titlebar">
+      <div class="demo-dots">
+        <div class="demo-dot red"></div>
+        <div class="demo-dot yellow"></div>
+        <div class="demo-dot green"></div>
+      </div>
+      <div class="demo-title">utils.ts - CodeType</div>
+    </div>
+    <div class="demo-tabs">
+      <div class="demo-tab active">utils.ts</div>
+    </div>
+    <div class="demo-editor">
+      <div class="demo-line-numbers">
+        <div>1</div>
+        <div>2</div>
+        <div>3</div>
+        <div>4</div>
+        <div>5</div>
+        <div>6</div>
+        <div>7</div>
+        <div>8</div>
+        <div>9</div>
+        <div>10</div>
+        <div>11</div>
+        <div>12</div>
+      </div>
+      <div class="demo-code-area">
+        <div id="typing-demo" class="typing-text"></div>
+      </div>
+    </div>
+    <div class="demo-stats">
+      <div class="demo-stat">
+        <span>WPM:</span>
+        <span id="demo-wpm" class="demo-stat-value wpm">0</span>
+      </div>
+      <div class="demo-stat">
+        <span>Accuracy:</span>
+        <span id="demo-accuracy" class="demo-stat-value accuracy">100%</span>
+      </div>
+      <div class="demo-stat">
+        <span>Progress:</span>
+        <span id="demo-progress" class="demo-stat-value">0%</span>
+      </div>
+      <div class="demo-stat">
+        <span style="color: var(--vscode-comment);">Click to start typing...</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="section">
+  <div class="section-header">
+    <span class="section-label">Features</span>
+    <h2 class="section-title">Everything You Need to Type Fast</h2>
+    <p class="section-subtitle">
+      Built for developers who want to level up their typing skills without leaving their favorite editor.
+    </p>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Stealth Mode</h3>
+      <p class="feature-description">
+        Opens as a regular editor tab named "utils.ts". Your colleagues will never suspect you're actually training to become a typing ninja.
+      </p>
+      <p class="feature-pun">// Now you see me, now you don't... but you'll always see my WPM</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Real Code Snippets</h3>
+      <p class="feature-description">
+        Practice with actual code from your workspace or curated samples in JavaScript, TypeScript, Python, Go, and more.
+      </p>
+      <p class="feature-pun">// console.log("Your typing speed") - no errors, just gains</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Solo Practice</h3>
+      <p class="feature-description">
+        Quick games with instant WPM tracking. Works completely offline so you can practice anywhere, even on a plane.
+      </p>
+      <p class="feature-pun">// while(true) { improveSpeed(); }</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 00-3-3.87"/>
+          <path d="M16 3.13a4 4 0 010 7.75"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Multiplayer Races</h3>
+      <p class="feature-description">
+        Create rooms and challenge your friends with shareable invite codes. Type the same code, race to the finish.
+      </p>
+      <p class="feature-pun">// git push --force your way to victory</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 20V10"/>
+          <path d="M12 20V4"/>
+          <path d="M6 20v-6"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Leaderboards</h3>
+      <p class="feature-description">
+        Daily, weekly, and all-time rankings. Climb the ranks and prove you're the fastest coder in your team.
+      </p>
+      <p class="feature-pun">// SELECT * FROM developers ORDER BY wpm DESC LIMIT 1</p>
+    </div>
+
+    <div class="feature-card">
+      <div class="feature-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 20h9"/>
+          <path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/>
+        </svg>
+      </div>
+      <h3 class="feature-title">Personal Stats</h3>
+      <p class="feature-description">
+        Track your personal best, average WPM, and total games played. Watch yourself improve over time.
+      </p>
+      <p class="feature-pun">// Your progress: Loading... just kidding, it's instant!</p>
+    </div>
+  </div>
+</section>
+
+<!-- Puns Section -->
+<section class="section puns-section">
+  <div class="section-header">
+    <span class="section-label">Developer Humor</span>
+    <h2 class="section-title">Type-ical Developer Problems</h2>
+    <p class="section-subtitle">
+      We couldn't resist adding some puns. Consider it a feature, not a bug.
+    </p>
+  </div>
+
+  <div class="puns-grid">
+    <div class="pun-card">
+      <div class="pun-text">
+        Why do fast typists never get caught slacking?<br>
+        <span>Because they always have an escape key.</span>
+      </div>
+    </div>
+
+    <div class="pun-card">
+      <div class="pun-text">
+        What's a developer's favorite exercise?<br>
+        <span>Running... their code at 150 WPM.</span>
+      </div>
+    </div>
+
+    <div class="pun-card">
+      <div class="pun-text">
+        Why did the developer break up with their keyboard?<br>
+        <span>They weren't their type.</span>
+      </div>
+    </div>
+
+    <div class="pun-card">
+      <div class="pun-text">
+        How do competitive typists greet each other?<br>
+        <span>"May the Shift be with you."</span>
+      </div>
+    </div>
+
+    <div class="pun-card">
+      <div class="pun-text">
+        What's a programmer's typing mantra?<br>
+        <span>return success; // no exceptions</span>
+      </div>
+    </div>
+
+    <div class="pun-card">
+      <div class="pun-text">
+        Why is CodeType the best meeting companion?<br>
+        <span>It helps you Ctrl your destiny.</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Download Section -->
+<section id="download" class="section download-section">
+  <div class="download-container">
+    <div class="section-header">
+      <span class="section-label">Get Started</span>
+      <h2 class="section-title">Install CodeType</h2>
+      <p class="section-subtitle">
+        Available on VS Code Marketplace. Free and open source.
+      </p>
+    </div>
+
+    <div class="download-options">
+      <div class="download-card">
+        <svg class="download-card-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352zm-5.146 14.861L10.826 12l7.178-5.448v10.896z"/>
+        </svg>
+        <h3 class="download-card-title">VS Code Marketplace</h3>
+        <p class="download-card-subtitle">One-click install from the marketplace</p>
+        <a href="https://marketplace.visualstudio.com/items?itemName=codetype.codetype" class="btn btn-primary">
+          Install Extension
+        </a>
+      </div>
+
+      <div class="download-card">
+        <svg class="download-card-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+        <h3 class="download-card-title">Build from Source</h3>
+        <p class="download-card-subtitle">Clone, customize, contribute</p>
+        <a href="https://github.com/codetype/codetype" class="btn btn-secondary">
+          View Repository
+        </a>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px; text-align: center;">
+      <p style="color: var(--vscode-text-muted); font-size: 14px;">
+        Quick install via command line:
+      </p>
+      <code style="display: inline-block; background: var(--vscode-bg); padding: 12px 24px; border-radius: 6px; margin-top: 12px; color: var(--vscode-orange);">
+        code --install-extension codetype.codetype
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="section">
+  <div class="section-header">
+    <span class="section-label">FAQ</span>
+    <h2 class="section-title">Frequently Asked Questions</h2>
+    <p class="section-subtitle">
+      Everything you wanted to know but were too busy typing to ask.
+    </p>
+  </div>
+
+  <div class="faq-container">
+    <div class="faq-item active">
+      <div class="faq-question">
+        <span>How do I start a game?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Press <code>Cmd+Shift+T</code> (Mac) or <code>Ctrl+Shift+T</code> (Windows/Linux) to open the CodeType menu. Select "Quick Solo Game" to start immediately, or choose from other options like creating a multiplayer room.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>Will my boss know I'm playing?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          The game opens as a tab called "utils.ts" and looks exactly like a normal code file. The typing interface mimics VS Code's editor, complete with line numbers and syntax highlighting. Unless your boss watches your WPM counter, you're safe.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>How does multiplayer work?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Create a room to get a 6-character invite code. Share this code with friends who can join using "Join Multiplayer Room". Once everyone's in, the host starts the game and everyone races to type the same code snippet. The fastest (and most accurate) typist wins!
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>Can I use my own code for practice?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Yes! Enable "Use Workspace Code" in settings (<code>codetype.useWorkspaceCode</code>) and CodeType will pull snippets from files in your current workspace. It's a great way to practice typing code you'll actually be writing.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>What counts as a "word" in WPM?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          We use the standard typing test convention: one "word" equals 5 characters. So <code>const x = 5;</code> (11 characters) counts as 2.2 words. This makes WPM comparable across different types of content.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>Is CodeType free?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Yes, CodeType is completely free and open source under the MIT license. Solo mode works entirely offline. Multiplayer features use a free hosted backend, or you can deploy your own Cloudflare Worker.
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <div class="faq-question">
+        <span>How do I get on the leaderboard?</span>
+        <svg class="faq-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </div>
+      <div class="faq-answer">
+        <div class="faq-answer-content">
+          Set your username using "CodeType: Set Username" command, then play any game (solo or multiplayer). Your scores are automatically submitted to the global leaderboard. View rankings with "CodeType: View Leaderboard".
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="footer-content">
+    <div class="footer-brand">
+      <div class="footer-logo">
+        <svg class="footer-logo-icon" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        CodeType
+      </div>
+      <p class="footer-tagline">
+        Speed typing competition disguised as normal coding. Made with caution by developers who just want to look busy.
+      </p>
+    </div>
+
+    <div class="footer-column">
+      <h4>Product</h4>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#download">Download</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com/codetype/codetype/blob/main/CHANGELOG.md">Changelog</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h4>Resources</h4>
+      <ul class="footer-links">
+        <li><a href="https://github.com/codetype/codetype">Documentation</a></li>
+        <li><a href="https://github.com/codetype/codetype/issues">Report Issues</a></li>
+        <li><a href="https://github.com/codetype/codetype/blob/main/CONTRIBUTING.md">Contributing</a></li>
+        <li><a href="https://github.com/codetype/codetype/blob/main/SECURITY.md">Security</a></li>
+      </ul>
+    </div>
+
+    <div class="footer-column">
+      <h4>Legal</h4>
+      <ul class="footer-links">
+        <li><a href="https://github.com/codetype/codetype/blob/main/LICENSE">MIT License</a></li>
+        <li><a href="https://github.com/codetype/codetype/blob/main/CODE_OF_CONDUCT.md">Code of Conduct</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>Built with caution. Type with confidence.</span>
+    <div class="footer-social">
+      <a href="https://github.com/codetype/codetype" title="GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+        </svg>
+      </a>
+      <a href="https://marketplace.visualstudio.com/items?itemName=codetype.codetype" title="VS Code Marketplace">
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 20.06V3.939a1.5 1.5 0 0 0-.85-1.352z"/>
+        </svg>
+      </a>
+    </div>
+  </div>
+</footer>
