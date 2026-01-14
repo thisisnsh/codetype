@@ -3,7 +3,7 @@ import { ApiClient } from '../api';
 import { CodeSampleProvider } from '../codeSamples';
 import { AuthService } from '../auth';
 
-type GameMode = 'menu' | 'solo' | 'leaderboard' | 'stats' | 'playing' | 'multiplayer' | 'lobby';
+type GameMode = 'menu' | 'solo' | 'stats' | 'playing' | 'multiplayer' | 'lobby';
 
 export class CodeTypePanel {
     public static currentPanel: CodeTypePanel | undefined;
@@ -114,11 +114,6 @@ export class CodeTypePanel {
                         gamesPlayed: stats.gamesPlayed
                     }
                 });
-                break;
-
-            case 'getLeaderboard':
-                const leaderboard = await this._api.getLeaderboard(message.timeframe || 'weekly');
-                this._panel.webview.postMessage({ type: 'leaderboard', data: leaderboard, timeframe: message.timeframe });
                 break;
 
             case 'getStats':
@@ -813,10 +808,6 @@ export class CodeTypePanel {
                     vscode.postMessage({ type: 'startSolo' });
                     renderLoading('Preparing code...');
                     break;
-                case 'leaderboard':
-                    vscode.postMessage({ type: 'getLeaderboard', timeframe: 'weekly' });
-                    renderLoading('Loading leaderboard...');
-                    break;
                 case 'stats':
                     vscode.postMessage({ type: 'getStats' });
                     renderLoading('Loading stats...');
@@ -858,10 +849,6 @@ export class CodeTypePanel {
                         <button class="menu-btn" onclick="showMultiplayerOptions()">
                             <span class="icon">👥</span>
                             <span>Challenge Colleagues</span>
-                        </button>
-                        <button class="menu-btn" onclick="showLeaderboard()">
-                            <span class="icon">◆</span>
-                            <span>Leaderboard</span>
                         </button>
                         <button class="menu-btn" onclick="showStats()">
                             <span class="icon">≡</span>
@@ -1105,40 +1092,6 @@ export class CodeTypePanel {
             \`;
         }
 
-        function renderLeaderboard(data, timeframe) {
-            state.currentTimeframe = timeframe;
-            const app = document.getElementById('app');
-            app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">← Back</button>
-                <div class="leaderboard-container">
-                    <h2 class="section-title">Leaderboard</h2>
-                    <div class="leaderboard-tabs">
-                        <button class="leaderboard-tab \${timeframe === 'daily' ? 'active' : ''}"
-                            onclick="loadLeaderboard('daily')">Daily</button>
-                        <button class="leaderboard-tab \${timeframe === 'weekly' ? 'active' : ''}"
-                            onclick="loadLeaderboard('weekly')">Weekly</button>
-                        <button class="leaderboard-tab \${timeframe === 'monthly' ? 'active' : ''}"
-                            onclick="loadLeaderboard('monthly')">Monthly</button>
-                        <button class="leaderboard-tab \${timeframe === 'yearly' ? 'active' : ''}"
-                            onclick="loadLeaderboard('yearly')">Yearly</button>
-                        <button class="leaderboard-tab \${timeframe === 'alltime' ? 'active' : ''}"
-                            onclick="loadLeaderboard('alltime')">All Time</button>
-                    </div>
-                    \${data.length === 0 ? \`
-                        <div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">
-                            No entries yet. Be the first!
-                        </div>
-                    \` : data.map((entry, i) => \`
-                        <div class="leaderboard-entry">
-                            <span class="leaderboard-rank \${i < 3 ? 'top' + (i+1) : ''}">#\${i + 1}</span>
-                            <span class="leaderboard-name">\${entry.username}</span>
-                            <span class="leaderboard-wpm">\${entry.avgWpm} WPM</span>
-                        </div>
-                    \`).join('')}
-                </div>
-            \`;
-        }
-
         function renderStats(data, isAuthenticated, user) {
             state.streakData = data.streakData;
             const avgWpm = data.avgWpm || (data.totalGamesPlayed > 0 ? Math.round(data.totalWpm / data.totalGamesPlayed) : 0);
@@ -1320,16 +1273,6 @@ export class CodeTypePanel {
         function refreshCode() {
             vscode.postMessage({ type: 'refreshCode' });
             renderLoading('Loading new snippet...');
-        }
-
-        function showLeaderboard() {
-            state.mode = 'leaderboard';
-            vscode.postMessage({ type: 'getLeaderboard', timeframe: 'weekly' });
-            renderLoading('Loading leaderboard...');
-        }
-
-        function loadLeaderboard(timeframe) {
-            vscode.postMessage({ type: 'getLeaderboard', timeframe });
         }
 
         function showStats() {
@@ -1788,9 +1731,6 @@ export class CodeTypePanel {
                     break;
                 case 'showResults':
                     renderResults(message.result, message.stats);
-                    break;
-                case 'leaderboard':
-                    renderLeaderboard(message.data, message.timeframe || state.currentTimeframe);
                     break;
                 case 'stats':
                     renderStats(message.data, message.isAuthenticated, message.user);

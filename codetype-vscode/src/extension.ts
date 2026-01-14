@@ -47,10 +47,6 @@ export function activate(context: vscode.ExtensionContext) {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'solo');
         }),
 
-        vscode.commands.registerCommand('codetype.leaderboard', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'leaderboard');
-        }),
-
         vscode.commands.registerCommand('codetype.setUsername', async () => {
             await setUsername(context);
         }),
