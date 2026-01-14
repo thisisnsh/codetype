@@ -13,6 +13,11 @@ new_classes = ["GameRoom"]
 
 [vars]
 ENVIRONMENT = "production"
+# Set these values after creating your Firebase project
+FIREBASE_PROJECT_ID = "your-firebase-project-id"
+FIREBASE_API_KEY = "your-firebase-api-key"
+# Set FIREBASE_CONFIG secret via: wrangler secret put FIREBASE_CONFIG
+# The secret should be a JSON string with the full Firebase config
 
 # KV namespace for leaderboards and user data
 [[kv_namespaces]]

@@ -1,0 +1,323 @@
+---
+title: Dashboard
+layout: base.njk
+---
+
+<div class="dashboard-container">
+  <!-- Loading State -->
+  <div id="dashboard-loading" class="dashboard-loading">
+    <div class="spinner"></div>
+    <p>Loading your stats...</p>
+  </div>
+
+  <!-- Not Authenticated -->
+  <div id="dashboard-auth" class="dashboard-auth" style="display: none;">
+    <h2>Sign in to view your dashboard</h2>
+    <p>Track your progress, maintain your streak, and compete on leaderboards.</p>
+    <a href="/auth/login/" class="btn btn-primary">Sign In</a>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="dashboard-content" class="dashboard-content" style="display: none;">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-info">
+        <img id="profile-photo" src="" alt="Profile" class="profile-photo">
+        <div class="profile-details">
+          <h1 id="profile-name" class="profile-name"></h1>
+          <p id="profile-email" class="profile-email"></p>
+        </div>
+      </div>
+      <button id="signout-btn" class="btn btn-secondary">Sign Out</button>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-games">0</div>
+        <div class="stat-label">Games Played</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value wpm" id="stat-avg-wpm">0</div>
+        <div class="stat-label">Average WPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value best" id="stat-best-wpm">0</div>
+        <div class="stat-label">Best WPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value streak" id="stat-streak">0</div>
+        <div class="stat-label">Current Streak</div>
+      </div>
+    </div>
+
+    <!-- Streak Heatmap -->
+    <div class="streak-section">
+      <div class="section-header-row">
+        <h2>Activity</h2>
+        <div class="year-selector">
+          <button id="prev-year" class="year-btn">&lt;</button>
+          <span id="current-year">2025</span>
+          <button id="next-year" class="year-btn">&gt;</button>
+        </div>
+      </div>
+      <div class="streak-stats">
+        <span><strong id="total-games-year">0</strong> games this year</span>
+        <span><strong id="active-days">0</strong> active days</span>
+        <span>Longest streak: <strong id="longest-streak">0</strong> days</span>
+      </div>
+      <div id="streak-heatmap" class="streak-heatmap"></div>
+      <div class="streak-legend">
+        <span class="legend-label">Less</span>
+        <div class="legend-box level-0"></div>
+        <div class="legend-box level-1"></div>
+        <div class="legend-box level-2"></div>
+        <div class="legend-box level-3"></div>
+        <div class="legend-box level-4"></div>
+        <span class="legend-label">More</span>
+      </div>
+    </div>
+
+    <!-- Recent Games -->
+    <div class="recent-games-section">
+      <h2>Recent Games</h2>
+      <div id="recent-games" class="recent-games-list">
+        <p class="no-games">No games played yet. Open the extension and start typing!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+  const firebaseConfig = window.FIREBASE_CONFIG || {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+  };
+
+  const API_BASE = window.API_BASE || 'https://codetype-api.your-subdomain.workers.dev';
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const loadingEl = document.getElementById('dashboard-loading');
+  const authEl = document.getElementById('dashboard-auth');
+  const contentEl = document.getElementById('dashboard-content');
+
+  let currentYear = new Date().getFullYear();
+  let currentUser = null;
+  let streakData = {};
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      await loadDashboard(user);
+    } else {
+      loadingEl.style.display = 'none';
+      authEl.style.display = 'block';
+    }
+  });
+
+  async function loadDashboard(user) {
+    try {
+      // Update profile
+      document.getElementById('profile-photo').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email);
+      document.getElementById('profile-name').textContent = user.displayName || user.email.split('@')[0];
+      document.getElementById('profile-email').textContent = user.email;
+
+      const token = await user.getIdToken();
+
+      // Fetch user stats
+      const statsResponse = await fetch(`${API_BASE}/users/${user.uid}/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (statsResponse.ok) {
+        const data = await statsResponse.json();
+        document.getElementById('stat-games').textContent = data.user.totalGamesPlayed || 0;
+        document.getElementById('stat-avg-wpm').textContent = data.user.avgWpm || 0;
+        document.getElementById('stat-best-wpm').textContent = data.user.bestWpm || 0;
+        document.getElementById('stat-streak').textContent = data.user.currentStreak || 0;
+
+        // Render recent games
+        renderRecentGames(data.recentGames || []);
+      }
+
+      // Fetch streak data
+      await loadStreakData(user.uid, token, currentYear);
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    }
+  }
+
+  async function loadStreakData(uid, token, year) {
+    try {
+      const response = await fetch(`${API_BASE}/users/${uid}/streaks?year=${year}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        streakData = await response.json();
+        document.getElementById('longest-streak').textContent = streakData.longestStreak || 0;
+        document.getElementById('active-days').textContent = streakData.totalActiveDays || 0;
+
+        // Calculate total games this year
+        let totalGames = 0;
+        for (const activity of Object.values(streakData.activities || {})) {
+          totalGames += activity.gamesPlayed || 0;
+        }
+        document.getElementById('total-games-year').textContent = totalGames;
+
+        renderStreakHeatmap(year, streakData.activities || {});
+      }
+    } catch (error) {
+      console.error('Failed to load streak data:', error);
+    }
+  }
+
+  function renderStreakHeatmap(year, activities) {
+    const container = document.getElementById('streak-heatmap');
+    container.innerHTML = '';
+
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+
+    // Create month labels
+    const monthLabels = document.createElement('div');
+    monthLabels.className = 'month-labels';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    months.forEach(month => {
+      const label = document.createElement('span');
+      label.textContent = month;
+      monthLabels.appendChild(label);
+    });
+    container.appendChild(monthLabels);
+
+    // Create grid
+    const grid = document.createElement('div');
+    grid.className = 'heatmap-grid';
+
+    // Day labels
+    const dayLabels = document.createElement('div');
+    dayLabels.className = 'day-labels';
+    ['', 'Mon', '', 'Wed', '', 'Fri', ''].forEach(day => {
+      const label = document.createElement('span');
+      label.textContent = day;
+      dayLabels.appendChild(label);
+    });
+    grid.appendChild(dayLabels);
+
+    // Weeks container
+    const weeksContainer = document.createElement('div');
+    weeksContainer.className = 'weeks-container';
+
+    // Find the first Sunday before or on Jan 1
+    const firstDay = new Date(startDate);
+    firstDay.setDate(firstDay.getDate() - firstDay.getDay());
+
+    let currentDate = new Date(firstDay);
+    let weekEl = null;
+
+    while (currentDate <= endDate || currentDate.getDay() !== 0) {
+      if (currentDate.getDay() === 0) {
+        weekEl = document.createElement('div');
+        weekEl.className = 'week';
+        weeksContainer.appendChild(weekEl);
+      }
+
+      const dayEl = document.createElement('div');
+      dayEl.className = 'day';
+
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const activity = activities[dateStr];
+      const gamesPlayed = activity?.gamesPlayed || 0;
+
+      // Determine level
+      let level = 0;
+      if (gamesPlayed >= 10) level = 4;
+      else if (gamesPlayed >= 6) level = 3;
+      else if (gamesPlayed >= 3) level = 2;
+      else if (gamesPlayed >= 1) level = 1;
+
+      dayEl.classList.add(`level-${level}`);
+
+      // Add tooltip
+      if (currentDate.getFullYear() === year) {
+        const dateFormatted = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        dayEl.title = `${dateFormatted}: ${gamesPlayed} game${gamesPlayed !== 1 ? 's' : ''}`;
+      } else {
+        dayEl.classList.add('outside');
+      }
+
+      weekEl.appendChild(dayEl);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    grid.appendChild(weeksContainer);
+    container.appendChild(grid);
+  }
+
+  function renderRecentGames(games) {
+    const container = document.getElementById('recent-games');
+
+    if (games.length === 0) {
+      container.innerHTML = '<p class="no-games">No games played yet. Open the extension and start typing!</p>';
+      return;
+    }
+
+    container.innerHTML = games.map(game => {
+      const date = new Date(game.playedAt);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+      return `
+        <div class="game-item">
+          <div class="game-stats">
+            <span class="game-wpm">${game.wpm} WPM</span>
+            <span class="game-accuracy">${game.accuracy}% accuracy</span>
+          </div>
+          <div class="game-meta">
+            <span class="game-date">${dateStr} at ${timeStr}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Year navigation
+  document.getElementById('current-year').textContent = currentYear;
+
+  document.getElementById('prev-year').addEventListener('click', async () => {
+    currentYear--;
+    document.getElementById('current-year').textContent = currentYear;
+    if (currentUser) {
+      const token = await currentUser.getIdToken();
+      await loadStreakData(currentUser.uid, token, currentYear);
+    }
+  });
+
+  document.getElementById('next-year').addEventListener('click', async () => {
+    if (currentYear < new Date().getFullYear()) {
+      currentYear++;
+      document.getElementById('current-year').textContent = currentYear;
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await loadStreakData(currentUser.uid, token, currentYear);
+      }
+    }
+  });
+
+  // Sign out
+  document.getElementById('signout-btn').addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = '/';
+  });
+</script>

@@ -1,0 +1,165 @@
+---
+title: Leaderboard
+layout: base.njk
+---
+
+<div class="leaderboard-container">
+  <div class="leaderboard-header">
+    <h1>Leaderboard</h1>
+    <p>See how you rank against other CodeType users.</p>
+  </div>
+
+  <!-- Timeframe Tabs -->
+  <div class="timeframe-tabs">
+    <button class="timeframe-tab active" data-timeframe="daily">Daily</button>
+    <button class="timeframe-tab" data-timeframe="weekly">Weekly</button>
+    <button class="timeframe-tab" data-timeframe="alltime">All Time</button>
+  </div>
+
+  <!-- Loading State -->
+  <div id="leaderboard-loading" class="leaderboard-loading">
+    <div class="spinner"></div>
+    <p>Loading leaderboard...</p>
+  </div>
+
+  <!-- Leaderboard Table -->
+  <div id="leaderboard-content" class="leaderboard-content" style="display: none;">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th class="rank-col">Rank</th>
+          <th class="user-col">User</th>
+          <th class="wpm-col">Avg WPM</th>
+          <th class="best-col">Best WPM</th>
+          <th class="games-col">Games</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body">
+      </tbody>
+    </table>
+
+    <div id="empty-state" class="empty-state" style="display: none;">
+      <p>No scores yet for this timeframe. Be the first to compete!</p>
+      <a href="/auth/login/" class="btn btn-primary">Sign In to Play</a>
+    </div>
+  </div>
+
+  <!-- Current User Card -->
+  <div id="user-rank-card" class="user-rank-card" style="display: none;">
+    <h3>Your Rank</h3>
+    <div class="user-rank-info">
+      <span class="user-rank">#<span id="user-rank-number">-</span></span>
+      <span class="user-avg-wpm"><span id="user-avg-wpm-value">0</span> WPM</span>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+  const firebaseConfig = window.FIREBASE_CONFIG || {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+  };
+
+  const API_BASE = window.API_BASE || 'https://codetype-api.your-subdomain.workers.dev';
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  const loadingEl = document.getElementById('leaderboard-loading');
+  const contentEl = document.getElementById('leaderboard-content');
+  const bodyEl = document.getElementById('leaderboard-body');
+  const emptyEl = document.getElementById('empty-state');
+  const userCardEl = document.getElementById('user-rank-card');
+
+  let currentTimeframe = 'daily';
+  let currentUserId = null;
+
+  // Listen for auth state
+  onAuthStateChanged(auth, (user) => {
+    currentUserId = user?.uid || null;
+    loadLeaderboard(currentTimeframe);
+  });
+
+  // Timeframe tabs
+  document.querySelectorAll('.timeframe-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.timeframe-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTimeframe = tab.dataset.timeframe;
+      loadLeaderboard(currentTimeframe);
+    });
+  });
+
+  async function loadLeaderboard(timeframe) {
+    loadingEl.style.display = 'flex';
+    contentEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+    userCardEl.style.display = 'none';
+
+    try {
+      const response = await fetch(`${API_BASE}/leaderboard?timeframe=${timeframe}`);
+      const data = await response.json();
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+
+      if (!data || data.length === 0) {
+        emptyEl.style.display = 'block';
+        bodyEl.innerHTML = '';
+        return;
+      }
+
+      renderLeaderboard(data);
+
+      // Find current user in leaderboard
+      if (currentUserId) {
+        const userEntry = data.find(e => e.userId === currentUserId);
+        if (userEntry) {
+          userCardEl.style.display = 'block';
+          document.getElementById('user-rank-number').textContent = userEntry.rank;
+          document.getElementById('user-avg-wpm-value').textContent = userEntry.avgWpm;
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+      emptyEl.style.display = 'block';
+      bodyEl.innerHTML = '';
+    }
+  }
+
+  function renderLeaderboard(entries) {
+    bodyEl.innerHTML = entries.map((entry, index) => {
+      const isCurrentUser = entry.userId === currentUserId;
+      const rankClass = index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '';
+      const rankIcon = index === 0 ? '&#127942;' : index === 1 ? '&#129352;' : index === 2 ? '&#129353;' : entry.rank;
+
+      return `
+        <tr class="${isCurrentUser ? 'current-user' : ''} ${rankClass}">
+          <td class="rank-col">
+            <span class="rank-badge ${rankClass}">${rankIcon}</span>
+          </td>
+          <td class="user-col">
+            <div class="user-info">
+              <img src="${entry.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(entry.username)}&background=007acc&color=fff`}" alt="" class="user-avatar">
+              <span class="username">${entry.username}</span>
+            </div>
+          </td>
+          <td class="wpm-col">
+            <span class="wpm-value">${entry.avgWpm}</span>
+          </td>
+          <td class="best-col">${entry.bestWpm}</td>
+          <td class="games-col">${entry.gamesPlayed}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Initial load
+  loadLeaderboard(currentTimeframe);
+</script>

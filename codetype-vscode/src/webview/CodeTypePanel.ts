@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { ApiClient } from '../api';
 import { CodeSampleProvider } from '../codeSamples';
+import { AuthService } from '../auth';
 
 type GameMode = 'menu' | 'solo' | 'leaderboard' | 'stats' | 'playing';
 
@@ -11,6 +12,7 @@ export class CodeTypePanel {
     private readonly _context: vscode.ExtensionContext;
     private readonly _api: ApiClient;
     private readonly _codeSamples: CodeSampleProvider;
+    private readonly _authService: AuthService;
     private _disposables: vscode.Disposable[] = [];
     private _currentMode: GameMode = 'menu';
 
@@ -19,6 +21,7 @@ export class CodeTypePanel {
         context: vscode.ExtensionContext,
         api: ApiClient,
         codeSamples: CodeSampleProvider,
+        authService: AuthService,
         mode: GameMode
     ) {
         const column = vscode.window.activeTextEditor
@@ -43,7 +46,13 @@ export class CodeTypePanel {
             }
         );
 
-        CodeTypePanel.currentPanel = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, mode);
+        CodeTypePanel.currentPanel = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, authService, mode);
+    }
+
+    public static refresh() {
+        if (CodeTypePanel.currentPanel) {
+            CodeTypePanel.currentPanel._update();
+        }
     }
 
     private constructor(
@@ -52,6 +61,7 @@ export class CodeTypePanel {
         context: vscode.ExtensionContext,
         api: ApiClient,
         codeSamples: CodeSampleProvider,
+        authService: AuthService,
         mode: GameMode
     ) {
         this._panel = panel;
@@ -59,6 +69,7 @@ export class CodeTypePanel {
         this._context = context;
         this._api = api;
         this._codeSamples = codeSamples;
+        this._authService = authService;
         this._currentMode = mode;
 
         this._update();
@@ -106,8 +117,27 @@ export class CodeTypePanel {
                 break;
 
             case 'getStats':
-                const localStats = this._api.getLocalStats();
-                this._panel.webview.postMessage({ type: 'stats', data: localStats });
+                const userStats = await this._api.getUserStats();
+                const streakData = await this._api.getStreakData();
+                const recentGames = await this._api.getRecentGames();
+                this._panel.webview.postMessage({
+                    type: 'stats',
+                    data: {
+                        ...userStats,
+                        games: recentGames,
+                        streakData
+                    },
+                    isAuthenticated: this._api.isAuthenticated(),
+                    user: this._api.getCurrentUser()
+                });
+                break;
+
+            case 'login':
+                vscode.commands.executeCommand('codetype.login');
+                break;
+
+            case 'logout':
+                vscode.commands.executeCommand('codetype.logout');
                 break;
 
             case 'navigate':
@@ -483,6 +513,10 @@ export class CodeTypePanel {
     }
 
     private _getScript(username: string) {
+        const isAuthenticated = this._authService.isAuthenticated();
+        const currentUser = this._authService.getCurrentUser();
+        const userJson = currentUser ? JSON.stringify(currentUser) : 'null';
+
         return `
         const vscode = acquireVsCodeApi();
         const state = {
@@ -492,7 +526,10 @@ export class CodeTypePanel {
             currentPos: 0,
             startTime: null,
             errors: 0,
-            currentTimeframe: 'weekly'
+            currentTimeframe: 'weekly',
+            isAuthenticated: ${isAuthenticated},
+            user: ${userJson},
+            streakData: null
         };
 
         function init() {
@@ -517,6 +554,26 @@ export class CodeTypePanel {
 
         function renderMenu() {
             const app = document.getElementById('app');
+            const userDisplay = state.isAuthenticated && state.user
+                ? \`<div style="display: flex; align-items: center; gap: 10px;">
+                    \${state.user.photoURL ? \`<img src="\${state.user.photoURL}" style="width: 32px; height: 32px; border-radius: 50%;" />\` : ''}
+                    <div>
+                        <div style="color: var(--vscode-textLink-foreground);">\${state.user.username || state.user.displayName}</div>
+                        <div style="font-size: 10px; color: var(--vscode-descriptionForeground);">\${state.user.currentStreak || 0} day streak</div>
+                    </div>
+                </div>\`
+                : \`<div style="color: var(--vscode-descriptionForeground);">Playing as: <span style="color: var(--vscode-textLink-foreground);">\${state.username}</span></div>\`;
+
+            const authButton = state.isAuthenticated
+                ? \`<button class="menu-btn" onclick="logout()">
+                    <span class="icon">⏻</span>
+                    <span>Sign Out</span>
+                </button>\`
+                : \`<button class="menu-btn" onclick="login()">
+                    <span class="icon">→</span>
+                    <span>Sign In</span>
+                </button>\`;
+
             app.innerHTML = \`
                 <div class="menu-container">
                     <div class="menu-title">CodeType</div>
@@ -534,9 +591,10 @@ export class CodeTypePanel {
                             <span class="icon">≡</span>
                             <span>My Stats</span>
                         </button>
+                        \${authButton}
                     </div>
-                    <div style="margin-top: 24px; color: var(--vscode-descriptionForeground); font-size: 11px;">
-                        Playing as: <span style="color: var(--vscode-textLink-foreground);">\${state.username}</span>
+                    <div style="margin-top: 24px; font-size: 11px;">
+                        \${userDisplay}
                     </div>
                 </div>
             \`;
@@ -802,16 +860,29 @@ export class CodeTypePanel {
             \`;
         }
 
-        function renderStats(data) {
-            const avgWpm = data.gamesPlayed > 0 ? Math.round(data.totalWpm / data.gamesPlayed) : 0;
+        function renderStats(data, isAuthenticated, user) {
+            state.streakData = data.streakData;
+            const avgWpm = data.avgWpm || (data.totalGamesPlayed > 0 ? Math.round(data.totalWpm / data.totalGamesPlayed) : 0);
+            const gamesPlayed = data.totalGamesPlayed || data.gamesPlayed || 0;
+            const bestWpm = data.bestWpm || 0;
+            const currentStreak = data.currentStreak || 0;
+            const longestStreak = data.longestStreak || 0;
+            const games = data.games || [];
+
+            const streakHeatmap = state.streakData && state.streakData.activities
+                ? renderStreakHeatmap(state.streakData.activities)
+                : (isAuthenticated
+                    ? '<div style="color: var(--vscode-descriptionForeground); text-align: center; padding: 20px;">No activity data yet. Start practicing!</div>'
+                    : '<div style="color: var(--vscode-descriptionForeground); text-align: center; padding: 20px;">Sign in to track your activity streak!</div>');
+
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <button class="back-btn" onclick="goToMenu()">← Back</button>
-                <div class="leaderboard-container">
+                <div class="leaderboard-container" style="max-width: 800px;">
                     <h2 class="section-title">My Stats</h2>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
-                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${data.gamesPlayed}</div>
+                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${gamesPlayed}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Sessions</div>
                         </div>
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
@@ -819,15 +890,25 @@ export class CodeTypePanel {
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Avg WPM</div>
                         </div>
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
-                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${data.bestWpm}</div>
+                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${bestWpm}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Best WPM</div>
                         </div>
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                            <div style="font-size: 28px; color: #39d353;">\${currentStreak}</div>
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Day Streak</div>
+                        </div>
                     </div>
+
+                    <h3 style="color: var(--vscode-descriptionForeground); margin-bottom: 12px; font-size: 13px;">Activity</h3>
+                    <div style="background: var(--vscode-editorWidget-background); padding: 16px; border-radius: 4px; margin-bottom: 24px; overflow-x: auto;">
+                        \${streakHeatmap}
+                    </div>
+
                     <h3 style="color: var(--vscode-descriptionForeground); margin-bottom: 12px; font-size: 13px;">Recent Sessions</h3>
-                    \${data.games.slice(-10).reverse().map(g => \`
+                    \${games.slice(-10).reverse().map(g => \`
                         <div class="leaderboard-entry">
                             <span style="color: var(--vscode-descriptionForeground); font-size: 11px; width: 90px;">
-                                \${new Date(g.timestamp).toLocaleDateString()}
+                                \${new Date(g.playedAt || g.timestamp).toLocaleDateString()}
                             </span>
                             <span style="flex: 1;">\${g.wpm} WPM</span>
                             <span style="color: var(--vscode-descriptionForeground);">\${g.accuracy}%</span>
@@ -835,6 +916,115 @@ export class CodeTypePanel {
                     \`).join('') || '<div style="color: var(--vscode-descriptionForeground);">No sessions yet</div>'}
                 </div>
             \`;
+        }
+
+        function renderStreakHeatmap(activities) {
+            const today = new Date();
+            const startDate = new Date(today.getFullYear(), 0, 1);
+            const days = [];
+            const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            // Generate all days of the year
+            const current = new Date(startDate);
+            while (current <= today) {
+                const dateStr = current.toISOString().split('T')[0];
+                const activity = activities[dateStr];
+                const games = activity ? activity.gamesPlayed : 0;
+                days.push({
+                    date: dateStr,
+                    dayOfWeek: current.getDay(),
+                    month: current.getMonth(),
+                    games: games
+                });
+                current.setDate(current.getDate() + 1);
+            }
+
+            // Group by weeks
+            const weeks = [];
+            let currentWeek = [];
+            // Pad the first week
+            const firstDayOfWeek = days[0]?.dayOfWeek || 0;
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                currentWeek.push(null);
+            }
+            days.forEach(day => {
+                currentWeek.push(day);
+                if (day.dayOfWeek === 6) {
+                    weeks.push(currentWeek);
+                    currentWeek = [];
+                }
+            });
+            if (currentWeek.length > 0) {
+                weeks.push(currentWeek);
+            }
+
+            // Get color for activity level
+            function getColor(games) {
+                if (games === 0) return '#2d333b';
+                if (games <= 2) return '#0e4429';
+                if (games <= 5) return '#006d32';
+                if (games <= 9) return '#26a641';
+                return '#39d353';
+            }
+
+            // Build SVG
+            const cellSize = 11;
+            const cellGap = 3;
+            const leftPadding = 30;
+            const topPadding = 20;
+            const width = leftPadding + weeks.length * (cellSize + cellGap);
+            const height = topPadding + 7 * (cellSize + cellGap) + 10;
+
+            let svg = \`<svg width="\${width}" height="\${height}" style="font-size: 10px; font-family: inherit;">\`;
+
+            // Day labels
+            dayLabels.forEach((label, i) => {
+                if (i % 2 === 1) {
+                    svg += \`<text x="0" y="\${topPadding + i * (cellSize + cellGap) + cellSize - 2}" fill="var(--vscode-descriptionForeground)">\${label}</text>\`;
+                }
+            });
+
+            // Month labels
+            let lastMonth = -1;
+            weeks.forEach((week, weekIndex) => {
+                const firstDay = week.find(d => d !== null);
+                if (firstDay && firstDay.month !== lastMonth && firstDay.dayOfWeek <= 3) {
+                    lastMonth = firstDay.month;
+                    svg += \`<text x="\${leftPadding + weekIndex * (cellSize + cellGap)}" y="12" fill="var(--vscode-descriptionForeground)">\${monthLabels[firstDay.month]}</text>\`;
+                }
+            });
+
+            // Cells
+            weeks.forEach((week, weekIndex) => {
+                week.forEach((day, dayIndex) => {
+                    if (day) {
+                        const x = leftPadding + weekIndex * (cellSize + cellGap);
+                        const y = topPadding + dayIndex * (cellSize + cellGap);
+                        const color = getColor(day.games);
+                        svg += \`<rect x="\${x}" y="\${y}" width="\${cellSize}" height="\${cellSize}" rx="2" fill="\${color}" title="\${day.date}: \${day.games} games"><title>\${day.date}: \${day.games} games</title></rect>\`;
+                    }
+                });
+            });
+
+            svg += '</svg>';
+
+            // Legend
+            const legend = \`
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: flex-end;">
+                    <span style="color: var(--vscode-descriptionForeground); font-size: 10px;">Less</span>
+                    <div style="display: flex; gap: 2px;">
+                        <div style="width: 11px; height: 11px; background: #2d333b; border-radius: 2px;"></div>
+                        <div style="width: 11px; height: 11px; background: #0e4429; border-radius: 2px;"></div>
+                        <div style="width: 11px; height: 11px; background: #006d32; border-radius: 2px;"></div>
+                        <div style="width: 11px; height: 11px; background: #26a641; border-radius: 2px;"></div>
+                        <div style="width: 11px; height: 11px; background: #39d353; border-radius: 2px;"></div>
+                    </div>
+                    <span style="color: var(--vscode-descriptionForeground); font-size: 10px;">More</span>
+                </div>
+            \`;
+
+            return svg + legend;
         }
 
         function goToMenu() {
@@ -864,6 +1054,14 @@ export class CodeTypePanel {
             renderLoading('Loading stats...');
         }
 
+        function login() {
+            vscode.postMessage({ type: 'login' });
+        }
+
+        function logout() {
+            vscode.postMessage({ type: 'logout' });
+        }
+
         window.addEventListener('message', event => {
             const message = event.data;
 
@@ -879,7 +1077,7 @@ export class CodeTypePanel {
                     renderLeaderboard(message.data, message.timeframe || state.currentTimeframe);
                     break;
                 case 'stats':
-                    renderStats(message.data);
+                    renderStats(message.data, message.isAuthenticated, message.user);
                     break;
                 case 'error':
                     alert(message.message);
