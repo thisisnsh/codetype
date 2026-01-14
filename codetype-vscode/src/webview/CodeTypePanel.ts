@@ -1116,8 +1116,8 @@ export class CodeTypePanel {
             const longestStreak = data.longestStreak || 0;
             const games = data.games || [];
             const authButton = isAuthenticated
-                ? `<button class="menu-btn" onclick="logout()">Sign Out</button>`
-                : `<button class="menu-btn" onclick="login()">Sign In</button>`;
+                ? \`<button class="menu-btn" onclick="logout()">Sign Out</button>\`
+                : \`<button class="menu-btn" onclick="login()">Sign In</button>\`;
 
             const streakHeatmap = state.streakData && state.streakData.activities
                 ? renderStreakHeatmap(state.streakData.activities)
