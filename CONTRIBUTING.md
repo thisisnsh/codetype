@@ -31,7 +31,7 @@ We welcome:
 - Bug fixes
 - New features
 - Documentation improvements
-- Code samples for typing practice
+- Code samples for the typing game
 - UI/UX improvements
 - Performance optimizations
 - Test coverage improvements

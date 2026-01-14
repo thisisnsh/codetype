@@ -17,13 +17,13 @@
 
 ## Why CodeType?
 
-**Perfect for vibe coding sessions.** When you're waiting for AI to generate code, or sitting through a long build, look busy while actually improving your typing speed. The game opens as a file called `utils.ts` - your colleagues will never know.
+**Perfect for vibe coding sessions.** When you're waiting for AI to generate code, or sitting through a long build, look busy while actually improving your typing speed. The game opens as a normal file tab (like `solo.ts` or `team.ts`) - your colleagues will never know.
 
 ## Features
 
-- **Stealth Mode**: Opens as a regular editor tab named "utils.ts"
+- **Stealth Mode**: Opens as a regular editor tab with mode-based names (like "solo.ts", "stats.ts", or "team.ts")
 - **Real Code**: Type actual code snippets from your workspace or curated samples
-- **Solo Mode**: Practice typing with instant WPM tracking (works offline!)
+- **Solo Mode**: Play a typing game with instant WPM tracking (works offline!)
 - **Multiplayer**: Create rooms and compete with friends via invite codes
 - **Leaderboards**: Daily, weekly, and all-time rankings
 - **Stats Tracking**: Personal best, average WPM, games played
