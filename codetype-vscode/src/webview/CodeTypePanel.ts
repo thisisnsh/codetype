@@ -400,6 +400,16 @@ export class CodeTypePanel {
             width: 260px;
         }
 
+        .actions-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .actions-bar .menu-btn {
+            width: auto;
+        }
+
         .menu-btn {
             background: var(--vscode-button-secondaryBackground);
             border: 1px solid var(--vscode-button-secondaryBackground);
@@ -716,7 +726,7 @@ export class CodeTypePanel {
 
         .join-room-input {
             display: flex;
-            gap: 8px;
+            gap: 4px;
             margin-top: 16px;
         }
 
@@ -729,13 +739,19 @@ export class CodeTypePanel {
             font-size: 14px;
             text-transform: uppercase;
             letter-spacing: 2px;
-            width: 140px;
+            width: 150px;
             border-radius: 2px;
         }
 
         .join-room-input input::placeholder {
             text-transform: none;
             letter-spacing: normal;
+        }
+
+        .join-room-input button {
+            width: 150px;
+            padding: 8px 0;
+            justify-content: center;
         }
 
         .multiplayer-results {
@@ -848,12 +864,9 @@ export class CodeTypePanel {
                     <div class="menu-title">CodeType</div>
                     <div class="menu-subtitle">Typing game for developers</div>
                     <div class="menu-buttons">
-                        <button class="menu-btn menu-btn-primary" onclick="startSolo()">Start Solo Game</button>
+                        <button class="menu-btn" onclick="startSolo()">Open CodeType</button>
                         <button class="menu-btn" onclick="showMultiplayerOptions()">
-                            Challenge Colleagues
-                        </button>
-                        <button class="menu-btn" onclick="showStats()">
-                            My Stats
+                            Start Team Game
                         </button>
                         \${authButton}
                     </div>
@@ -1102,6 +1115,9 @@ export class CodeTypePanel {
             const currentStreak = data.currentStreak || 0;
             const longestStreak = data.longestStreak || 0;
             const games = data.games || [];
+            const authButton = isAuthenticated
+                ? `<button class="menu-btn" onclick="logout()">Sign Out</button>`
+                : `<button class="menu-btn" onclick="login()">Sign In</button>`;
 
             const streakHeatmap = state.streakData && state.streakData.activities
                 ? renderStreakHeatmap(state.streakData.activities)
@@ -1119,7 +1135,14 @@ export class CodeTypePanel {
 
             app.innerHTML = \`
                 <div class="leaderboard-container" style="max-width: 800px;">
-                    <h2 class="section-title">My Stats</h2>
+                    <h2 class="section-title">CodeType</h2>
+                    <div class="menu-subtitle">Typing game for developers</div>
+                    <div class="actions-bar" style="margin-bottom: 20px;">
+                        <button class="menu-btn" onclick="startSolo()">Open CodeType</button>
+                        <button class="menu-btn" onclick="showMultiplayerOptions()">Start Team Game</button>
+                        \${authButton}
+                    </div>
+                    <h2 class="section-title" style="margin-top: 8px;">My Stats</h2>
                     \${statsSubtitle}
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
@@ -1303,7 +1326,7 @@ export class CodeTypePanel {
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <div class="menu-container">
-                    <div class="menu-title">Challenge Colleagues</div>
+                    <div class="menu-title">Start Team Game</div>
                     <div class="menu-subtitle">Race against your team!</div>
 
                     <div style="margin-bottom: 24px;">
@@ -1321,7 +1344,7 @@ export class CodeTypePanel {
                         <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-bottom: 12px;">Or join an existing room:</div>
                         <div class="join-room-input">
                             <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" />
-                            <button class="menu-btn menu-btn-primary" onclick="joinRoom()" style="padding: 8px 16px;">Join</button>
+                            <button class="menu-btn menu-btn-primary" onclick="joinRoom()">Join</button>
                         </div>
                     </div>
                 </div>

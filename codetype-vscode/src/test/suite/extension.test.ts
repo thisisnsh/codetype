@@ -22,7 +22,6 @@ suite('Extension Test Suite', () => {
             'codetype.start',
             'codetype.solo',
             'codetype.team',
-            'codetype.stats',
             'codetype.login',
             'codetype.logout'
         ];

@@ -67,8 +67,8 @@ suite('WebView UI Test Suite', () => {
     });
 
     suite('Stats', () => {
-        test('should open stats view', async () => {
-            await vscode.commands.executeCommand('codetype.stats');
+        test('should open stats view on start', async () => {
+            await vscode.commands.executeCommand('codetype.start');
             await sleep(500);
             assert.ok(true, 'Stats opened');
         });

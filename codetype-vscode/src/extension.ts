@@ -51,10 +51,6 @@ export function activate(context: vscode.ExtensionContext) {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'team');
         }),
 
-        vscode.commands.registerCommand('codetype.stats', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'stats');
-        }),
-
         vscode.commands.registerCommand('codetype.login', async () => {
             await authService.login();
         }),

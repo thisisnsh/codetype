@@ -36,7 +36,6 @@
     "onCommand:codetype.start",
     "onCommand:codetype.solo",
     "onCommand:codetype.team",
-    "onCommand:codetype.stats",
     "onCommand:codetype.login",
     "onCommand:codetype.logout",
     "onUri"
@@ -56,12 +55,7 @@
       },
       {
         "command": "codetype.team",
-        "title": "Challenge Colleagues",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.stats",
-        "title": "View My Stats",
+        "title": "Start Team Game",
         "category": "CodeType"
       },
       {
