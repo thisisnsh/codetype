@@ -54,17 +54,6 @@ function ensureUserId(_context: vscode.ExtensionContext): string {
     return userId;
 }
 
-async function ensureUsername(context: vscode.ExtensionContext): Promise<string | undefined> {
-    const config = vscode.workspace.getConfiguration('codetype');
-    let username = config.get<string>('username');
-
-    if (!username) {
-        username = await setUsername(context);
-    }
-
-    return username;
-}
-
 async function setUsername(_context: vscode.ExtensionContext): Promise<string | undefined> {
     const config = vscode.workspace.getConfiguration('codetype');
 
