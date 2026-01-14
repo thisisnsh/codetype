@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     apiClient = new ApiClient(context, authService);
     codeSampleProvider = new CodeSampleProvider();
 
-    // Ensure user has an ID (for anonymous mode fallback)
+    // Ensure user has an ID for multiplayer sessions.
     ensureUserId(context);
 
     // Register URI handler for auth callback
@@ -45,10 +45,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.commands.registerCommand('codetype.solo', () => {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'solo');
-        }),
-
-        vscode.commands.registerCommand('codetype.setUsername', async () => {
-            await setUsername(context);
         }),
 
         vscode.commands.registerCommand('codetype.stats', () => {
@@ -90,34 +86,6 @@ function ensureUserId(_context: vscode.ExtensionContext): string {
     }
 
     return userId;
-}
-
-async function setUsername(_context: vscode.ExtensionContext): Promise<string | undefined> {
-    const config = vscode.workspace.getConfiguration('codetype');
-
-    const username = await vscode.window.showInputBox({
-        prompt: 'Choose your username for the leaderboard',
-        placeHolder: 'speedcoder42',
-        validateInput: (value) => {
-            if (!value || value.length < 2) {
-                return 'Username must be at least 2 characters';
-            }
-            if (value.length > 20) {
-                return 'Username must be 20 characters or less';
-            }
-            if (!/^[a-zA-Z0-9_-]+$/.test(value)) {
-                return 'Only letters, numbers, underscores, and hyphens allowed';
-            }
-            return null;
-        }
-    });
-
-    if (username) {
-        await config.update('username', username, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage(`Username set to: ${username}`);
-    }
-
-    return username;
 }
 
 export function deactivate() {}

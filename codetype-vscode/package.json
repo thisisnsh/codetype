@@ -35,7 +35,6 @@
   "activationEvents": [
     "onCommand:codetype.start",
     "onCommand:codetype.solo",
-    "onCommand:codetype.setUsername",
     "onCommand:codetype.stats",
     "onCommand:codetype.login",
     "onCommand:codetype.logout",
@@ -52,11 +51,6 @@
       {
         "command": "codetype.solo",
         "title": "Quick Practice",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.setUsername",
-        "title": "Set Username",
         "category": "CodeType"
       },
       {
@@ -78,11 +72,6 @@
     "configuration": {
       "title": "CodeType",
       "properties": {
-        "codetype.username": {
-          "type": "string",
-          "default": "",
-          "description": "Your username for leaderboards"
-        },
         "codetype.userId": {
           "type": "string",
           "default": "",

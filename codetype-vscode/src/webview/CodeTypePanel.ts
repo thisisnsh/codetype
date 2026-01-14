@@ -191,9 +191,6 @@ export class CodeTypePanel {
     }
 
     private _getHtmlForWebview() {
-        const config = vscode.workspace.getConfiguration('codetype');
-        const username = config.get<string>('username') || 'Anonymous';
-
         return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -209,7 +206,7 @@ export class CodeTypePanel {
         ${this._getInitialContent()}
     </div>
     <script>
-        ${this._getScript(username)}
+        ${this._getScript()}
     </script>
 </body>
 </html>`;
@@ -770,16 +767,17 @@ export class CodeTypePanel {
         return `<div class="loading">Loading...</div>`;
     }
 
-    private _getScript(username: string) {
+    private _getScript() {
         const isAuthenticated = this._authService.isAuthenticated();
         const currentUser = this._authService.getCurrentUser();
         const userJson = currentUser ? JSON.stringify(currentUser) : 'null';
+        const displayName = currentUser?.username || currentUser?.displayName || 'Player';
+        const displayNameJson = JSON.stringify(displayName);
 
         return `
         const vscode = acquireVsCodeApi();
         const state = {
             mode: '${this._currentMode}',
-            username: '${username}',
             code: '',
             currentPos: 0,
             startTime: null,
@@ -794,7 +792,7 @@ export class CodeTypePanel {
             players: [],
             isHost: false,
             userId: null,
-            displayName: '${username}' || 'Player',
+            displayName: ${displayNameJson},
             countdownValue: null,
             multiplayerResults: null
         };
@@ -825,7 +823,10 @@ export class CodeTypePanel {
                         <div style="font-size: 10px; color: var(--vscode-descriptionForeground);">\${state.user.currentStreak || 0} day streak</div>
                     </div>
                 </div>\`
-                : \`<div style="color: var(--vscode-descriptionForeground);">Playing as: <span style="color: var(--vscode-textLink-foreground);">\${state.username}</span></div>\`;
+                : \`<div style="color: var(--vscode-descriptionForeground); font-size: 11px;">
+                    Practice without signing in.<br/>
+                    <span style="opacity: 0.7;">Sign in to save streaks across devices.</span>
+                </div>\`;
 
             const authButton = state.isAuthenticated
                 ? \`<button class="menu-btn" onclick="logout()">
@@ -1105,13 +1106,24 @@ export class CodeTypePanel {
                 ? renderStreakHeatmap(state.streakData.activities)
                 : (isAuthenticated
                     ? '<div style="color: var(--vscode-descriptionForeground); text-align: center; padding: 20px;">No activity data yet. Start practicing!</div>'
-                    : '<div style="color: var(--vscode-descriptionForeground); text-align: center; padding: 20px;">Sign in to track your activity streak!</div>');
+                    : \`<div style="text-align: center; padding: 20px;">
+                        <div style="color: var(--vscode-descriptionForeground); margin-bottom: 12px;">Sign in to track your daily streak and sync progress across devices</div>
+                        <button class="menu-btn" onclick="login()" style="display: inline-flex; padding: 8px 16px;">
+                            <span class="icon">→</span>
+                            <span>Sign In</span>
+                        </button>
+                    </div>\`);
 
             const app = document.getElementById('app');
+            const statsSubtitle = isAuthenticated
+                ? ''
+                : '<div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 16px;">Showing local stats from this device only</div>';
+
             app.innerHTML = \`
                 <button class="back-btn" onclick="goToMenu()">← Back</button>
                 <div class="leaderboard-container" style="max-width: 800px;">
                     <h2 class="section-title">My Stats</h2>
+                    \${statsSubtitle}
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
                             <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${gamesPlayed}</div>
@@ -1126,8 +1138,8 @@ export class CodeTypePanel {
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Best WPM</div>
                         </div>
                         <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
-                            <div style="font-size: 28px; color: #39d353;">\${currentStreak}</div>
-                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Day Streak</div>
+                            <div style="font-size: 28px; color: \${isAuthenticated ? '#39d353' : 'var(--vscode-descriptionForeground)'};">\${isAuthenticated ? currentStreak : '-'}</div>
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Day Streak\${isAuthenticated ? '' : '*'}</div>
                         </div>
                     </div>
 

@@ -21,11 +21,9 @@ suite('Extension Test Suite', () => {
         const expectedCommands = [
             'codetype.start',
             'codetype.solo',
-            'codetype.createRoom',
-            'codetype.joinRoom',
-            'codetype.leaderboard',
-            'codetype.setUsername',
-            'codetype.stats'
+            'codetype.stats',
+            'codetype.login',
+            'codetype.logout'
         ];
 
         for (const cmd of expectedCommands) {
@@ -62,7 +60,4 @@ suite('Extension Test Suite', () => {
         assert.ok(true, 'Solo command executed without error');
     });
 
-    // Note: Testing setUsername command with input box is skipped because
-    // the workbench.action.closeQuickInput command is not available in
-    // headless CI environments. Command registration is verified above.
 });

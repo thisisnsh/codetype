@@ -61,16 +61,13 @@ export class ApiClient {
         this.authService = authService;
     }
 
-    private getConfig() {
+    private getUserId(): string {
         const config = vscode.workspace.getConfiguration('codetype');
-        return {
-            userId: config.get<string>('userId') || '',
-            username: config.get<string>('username') || 'Anonymous'
-        };
+        return config.get<string>('userId') || '';
     }
 
     /**
-     * Submit a game score - uses authenticated endpoint if logged in, falls back to anonymous
+     * Submit a game score - uses authenticated endpoint if logged in, otherwise local only.
      */
     async submitScore(result: GameResult): Promise<void> {
         // Always store locally
@@ -115,17 +112,7 @@ export class ApiClient {
             }
         }
 
-        // Fall back to anonymous submission
-        const { userId, username } = this.getConfig();
-        try {
-            await fetch(`${API_BASE}/scores`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, username, ...result })
-            });
-        } catch (error) {
-            console.warn('Failed to submit score to server:', error);
-        }
+        // Anonymous mode stays local only.
     }
 
     private storeLocalScore(result: GameResult) {
@@ -267,15 +254,15 @@ export class ApiClient {
     }
 
     async getLeaderboard(timeframe: LeaderboardTimeframe = 'weekly'): Promise<LeaderboardEntry[]> {
-        if (OFFLINE_MODE) {
+        if (OFFLINE_MODE || !this.authService.isAuthenticated()) {
             const stats = this.getLocalStats();
             if (stats.gamesPlayed === 0) return [];
 
-            const { username, userId } = this.getConfig();
+            const userId = this.getUserId();
             return [{
                 rank: 1,
-                userId,
-                username: username || 'You',
+                userId: userId || 'local',
+                username: 'You',
                 avgWpm: Math.round(stats.totalWpm / stats.gamesPlayed),
                 gamesPlayed: stats.gamesPlayed,
                 bestWpm: stats.bestWpm
@@ -309,7 +296,7 @@ export class ApiClient {
     /**
      * Create a multiplayer room
      */
-    async createRoom(hostId: string, hostUsername: string): Promise<string | null> {
+    async createRoom(hostId: string, hostDisplayName: string): Promise<string | null> {
         if (OFFLINE_MODE) {
             return null;
         }
@@ -318,7 +305,7 @@ export class ApiClient {
             const response = await fetch(`${API_BASE}/rooms`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ hostId, hostUsername })
+                body: JSON.stringify({ hostId, hostUsername: hostDisplayName })
             });
 
             if (!response.ok) return null;
@@ -334,13 +321,13 @@ export class ApiClient {
     /**
      * Get WebSocket URL for room
      */
-    getWebSocketUrl(roomCode: string, userId: string, username: string): string | null {
+    getWebSocketUrl(roomCode: string, userId: string, displayName: string): string | null {
         if (OFFLINE_MODE || !API_BASE) {
             return null;
         }
 
         const wsBase = API_BASE.replace('https://', 'wss://').replace('http://', 'ws://');
-        return `${wsBase}/rooms/${roomCode}/ws?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}`;
+        return `${wsBase}/rooms/${roomCode}/ws?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(displayName)}`;
     }
 
     /**
