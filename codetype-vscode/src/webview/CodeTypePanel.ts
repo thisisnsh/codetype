@@ -3,16 +3,18 @@ import { ApiClient } from '../api';
 import { CodeSampleProvider } from '../codeSamples';
 import { AuthService } from '../auth';
 
-type GameMode = 'menu' | 'solo' | 'stats' | 'playing' | 'multiplayer' | 'lobby';
+type GameMode = 'menu' | 'solo' | 'stats' | 'team' | 'playing' | 'multiplayer' | 'lobby';
 
 export class CodeTypePanel {
-    public static currentPanel: CodeTypePanel | undefined;
+    private static _panels = new Set<CodeTypePanel>();
+    private static _panelCounts = new Map<string, number>();
     private readonly _panel: vscode.WebviewPanel;
     private readonly _extensionUri: vscode.Uri;
     private readonly _context: vscode.ExtensionContext;
     private readonly _api: ApiClient;
     private readonly _codeSamples: CodeSampleProvider;
     private readonly _authService: AuthService;
+    private readonly _panelLabel: string;
     private _disposables: vscode.Disposable[] = [];
     private _currentMode: GameMode = 'menu';
 
@@ -28,16 +30,13 @@ export class CodeTypePanel {
             ? vscode.window.activeTextEditor.viewColumn
             : undefined;
 
-        if (CodeTypePanel.currentPanel) {
-            CodeTypePanel.currentPanel._panel.reveal(column);
-            CodeTypePanel.currentPanel.setMode(mode);
-            return;
-        }
+        const baseName = CodeTypePanel._getPanelBaseName(mode);
+        const panelTitle = CodeTypePanel._getUniquePanelTitle(baseName);
 
         // Create a new panel that looks like a regular editor
         const panel = vscode.window.createWebviewPanel(
             'codeType',
-            'utils.ts', // Stealth name - looks like a normal file!
+            panelTitle,
             column || vscode.ViewColumn.One,
             {
                 enableScripts: true,
@@ -46,13 +45,38 @@ export class CodeTypePanel {
             }
         );
 
-        CodeTypePanel.currentPanel = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, authService, mode);
+        const panelInstance = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, authService, mode, panelTitle);
+        CodeTypePanel._panels.add(panelInstance);
     }
 
-    public static refresh() {
-        if (CodeTypePanel.currentPanel) {
-            CodeTypePanel.currentPanel._update();
+    public static refreshAll() {
+        for (const panel of CodeTypePanel._panels) {
+            panel._update();
         }
+    }
+
+    private static _getPanelBaseName(mode: GameMode): string {
+        switch (mode) {
+            case 'solo':
+            case 'playing':
+                return 'solo';
+            case 'stats':
+                return 'stats';
+            case 'team':
+            case 'lobby':
+            case 'multiplayer':
+                return 'team';
+            case 'menu':
+            default:
+                return 'menu';
+        }
+    }
+
+    private static _getUniquePanelTitle(baseName: string): string {
+        const nextCount = (CodeTypePanel._panelCounts.get(baseName) ?? 0) + 1;
+        CodeTypePanel._panelCounts.set(baseName, nextCount);
+        const suffix = nextCount === 1 ? '' : `-${nextCount}`;
+        return `${baseName}${suffix}.ts`;
     }
 
     private constructor(
@@ -62,7 +86,8 @@ export class CodeTypePanel {
         api: ApiClient,
         codeSamples: CodeSampleProvider,
         authService: AuthService,
-        mode: GameMode
+        mode: GameMode,
+        panelLabel: string
     ) {
         this._panel = panel;
         this._extensionUri = extensionUri;
@@ -71,6 +96,7 @@ export class CodeTypePanel {
         this._codeSamples = codeSamples;
         this._authService = authService;
         this._currentMode = mode;
+        this._panelLabel = panelLabel;
 
         this._update();
 
@@ -196,7 +222,7 @@ export class CodeTypePanel {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>utils.ts</title>
+    <title>${this._panelLabel}</title>
     <style>
         ${this._getStyles()}
     </style>
@@ -246,12 +272,19 @@ export class CodeTypePanel {
             font-size: 12px;
         }
 
+        .editor-header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
         .file-path {
             color: var(--vscode-descriptionForeground);
         }
 
         .stats-bar {
             display: flex;
+            align-items: center;
             gap: 16px;
             color: var(--vscode-descriptionForeground);
         }
@@ -344,10 +377,12 @@ export class CodeTypePanel {
         .menu-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             height: 100%;
             gap: 20px;
+            padding: 32px;
+            text-align: left;
         }
 
         .menu-title {
@@ -413,18 +448,19 @@ export class CodeTypePanel {
             bottom: 0;
             background: var(--vscode-editor-background);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             flex-direction: column;
             gap: 20px;
             z-index: 100;
+            padding: 32px;
         }
 
         .results-card {
             background: var(--vscode-editorWidget-background);
             border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
             padding: 28px 40px;
-            text-align: center;
+            text-align: left;
             border-radius: 4px;
         }
 
@@ -460,7 +496,7 @@ export class CodeTypePanel {
         .leaderboard-container {
             padding: 20px;
             max-width: 600px;
-            margin: 0 auto;
+            margin: 0;
         }
 
         .leaderboard-tabs {
@@ -517,26 +553,6 @@ export class CodeTypePanel {
             font-weight: bold;
         }
 
-        /* Back button */
-        .back-btn {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            background: transparent;
-            border: none;
-            color: var(--vscode-descriptionForeground);
-            cursor: pointer;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-family: inherit;
-        }
-
-        .back-btn:hover {
-            color: var(--vscode-editor-foreground);
-        }
-
         .section-title {
             color: var(--vscode-textLink-foreground);
             margin-bottom: 16px;
@@ -566,7 +582,7 @@ export class CodeTypePanel {
         .lobby-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             height: 100%;
             gap: 24px;
@@ -776,6 +792,7 @@ export class CodeTypePanel {
 
         return `
         const vscode = acquireVsCodeApi();
+        const fileLabel = ${JSON.stringify(this._panelLabel)};
         const state = {
             mode: '${this._currentMode}',
             code: '',
@@ -806,6 +823,9 @@ export class CodeTypePanel {
                     vscode.postMessage({ type: 'startSolo' });
                     renderLoading('Preparing code...');
                     break;
+                case 'team':
+                    showMultiplayerOptions();
+                    break;
                 case 'stats':
                     vscode.postMessage({ type: 'getStats' });
                     renderLoading('Loading stats...');
@@ -824,7 +844,7 @@ export class CodeTypePanel {
                     </div>
                 </div>\`
                 : \`<div style="color: var(--vscode-descriptionForeground); font-size: 11px;">
-                    Practice without signing in.<br/>
+                    Play without signing in.<br/>
                     <span style="opacity: 0.7;">Sign in to save streaks across devices.</span>
                 </div>\`;
 
@@ -841,11 +861,11 @@ export class CodeTypePanel {
             app.innerHTML = \`
                 <div class="menu-container">
                     <div class="menu-title">CodeType</div>
-                    <div class="menu-subtitle">Typing practice for developers</div>
+                    <div class="menu-subtitle">Typing game for developers</div>
                     <div class="menu-buttons">
                         <button class="menu-btn menu-btn-primary" onclick="startSolo()">
                             <span class="icon">▶</span>
-                            <span>Start Practice</span>
+                            <span>Start Solo Game</span>
                         </button>
                         <button class="menu-btn" onclick="showMultiplayerOptions()">
                             <span class="icon">👥</span>
@@ -882,24 +902,26 @@ export class CodeTypePanel {
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <div class="editor-header">
-                    <span class="file-path">practice.ts</span>
-                    <div class="stats-bar">
-                        <div class="stat">
-                            <span>WPM:</span>
-                            <span class="stat-value" id="wpm">0</span>
+                    <div class="editor-header-left">
+                        <span class="file-path">\${fileLabel}</span>
+                        <div class="stats-bar">
+                            <div class="stat">
+                                <span>WPM:</span>
+                                <span class="stat-value" id="wpm">0</span>
+                            </div>
+                            <div class="stat">
+                                <span>Accuracy:</span>
+                                <span class="stat-value" id="accuracy">100%</span>
+                            </div>
+                            <div class="stat">
+                                <span>Progress:</span>
+                                <span class="stat-value" id="progress">0%</span>
+                            </div>
                         </div>
-                        <div class="stat">
-                            <span>Accuracy:</span>
-                            <span class="stat-value" id="accuracy">100%</span>
-                        </div>
-                        <div class="stat">
-                            <span>Progress:</span>
-                            <span class="stat-value" id="progress">0%</span>
-                        </div>
-                        <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
-                            ↻ New Snippet
-                        </button>
                     </div>
+                    <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
+                        ↻ New Snippet
+                    </button>
                 </div>
                 <div class="editor-container">
                     <div class="line-numbers" id="lineNumbers"></div>
@@ -1069,23 +1091,23 @@ export class CodeTypePanel {
                         </div>
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--vscode-panel-border);">
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 8px;">Your Stats</div>
-                            <div style="display: flex; gap: 20px; justify-content: center;">
-                                <div style="text-align: center;">
+                            <div style="display: flex; gap: 20px; justify-content: flex-start;">
+                                <div style="text-align: left;">
                                     <div style="color: var(--vscode-textLink-foreground);">\${stats.avgWpm}</div>
                                     <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Avg WPM</div>
                                 </div>
-                                <div style="text-align: center;">
+                                <div style="text-align: left;">
                                     <div style="color: var(--vscode-textLink-foreground);">\${stats.bestWpm}</div>
                                     <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Best WPM</div>
                                 </div>
-                                <div style="text-align: center;">
+                                <div style="text-align: left;">
                                     <div style="color: var(--vscode-textLink-foreground);">\${stats.gamesPlayed}</div>
                                     <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Sessions</div>
                                 </div>
                             </div>
                         </div>
                         <div class="menu-buttons" style="margin-top: 20px; width: auto;">
-                            <button class="menu-btn menu-btn-primary" onclick="startSolo()">Practice Again</button>
+                            <button class="menu-btn menu-btn-primary" onclick="startSolo()">Play Again</button>
                             <button class="menu-btn" onclick="goToMenu()">Menu</button>
                         </div>
                     </div>
@@ -1105,8 +1127,8 @@ export class CodeTypePanel {
             const streakHeatmap = state.streakData && state.streakData.activities
                 ? renderStreakHeatmap(state.streakData.activities)
                 : (isAuthenticated
-                    ? '<div style="color: var(--vscode-descriptionForeground); text-align: center; padding: 20px;">No activity data yet. Start practicing!</div>'
-                    : \`<div style="text-align: center; padding: 20px;">
+                    ? '<div style="color: var(--vscode-descriptionForeground); text-align: left; padding: 20px;">No activity data yet. Start playing!</div>'
+                    : \`<div style="text-align: left; padding: 20px;">
                         <div style="color: var(--vscode-descriptionForeground); margin-bottom: 12px;">Sign in to track your daily streak and sync progress across devices</div>
                         <button class="menu-btn" onclick="login()" style="display: inline-flex; padding: 8px 16px;">
                             <span class="icon">→</span>
@@ -1120,24 +1142,23 @@ export class CodeTypePanel {
                 : '<div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 16px;">Showing local stats from this device only</div>';
 
             app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">← Back</button>
                 <div class="leaderboard-container" style="max-width: 800px;">
                     <h2 class="section-title">My Stats</h2>
                     \${statsSubtitle}
                     <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
                             <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${gamesPlayed}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Sessions</div>
                         </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
                             <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${avgWpm}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Avg WPM</div>
                         </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
                             <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${bestWpm}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Best WPM</div>
                         </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
                             <div style="font-size: 28px; color: \${isAuthenticated ? '#39d353' : 'var(--vscode-descriptionForeground)'};">\${isAuthenticated ? currentStreak : '-'}</div>
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Day Streak\${isAuthenticated ? '' : '*'}</div>
                         </div>
@@ -1255,7 +1276,7 @@ export class CodeTypePanel {
 
             // Legend
             const legend = \`
-                <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: flex-end;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 12px; justify-content: flex-start;">
                     <span style="color: var(--vscode-descriptionForeground); font-size: 10px;">Less</span>
                     <div style="display: flex; gap: 2px;">
                         <div style="width: 11px; height: 11px; background: #2d333b; border-radius: 2px;"></div>
@@ -1303,9 +1324,9 @@ export class CodeTypePanel {
 
         // Multiplayer functions
         function showMultiplayerOptions() {
+            state.mode = 'team';
             const app = document.getElementById('app');
             app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">← Back</button>
                 <div class="menu-container">
                     <div class="menu-title">Challenge Colleagues</div>
                     <div class="menu-subtitle">Race against your team!</div>
@@ -1324,7 +1345,7 @@ export class CodeTypePanel {
                         </button>
                     </div>
 
-                    <div style="margin-top: 32px; text-align: center;">
+                    <div style="margin-top: 32px; text-align: left;">
                         <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-bottom: 12px;">Or join an existing room:</div>
                         <div class="join-room-input">
                             <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" />
@@ -1470,7 +1491,6 @@ export class CodeTypePanel {
             \`).join('');
 
             app.innerHTML = \`
-                <button class="back-btn" onclick="leaveLobby()">← Leave</button>
                 <div class="lobby-container">
                     <div style="color: var(--vscode-descriptionForeground); font-size: 12px;">Room Code</div>
                     <div class="room-code">\${state.roomCode}</div>
@@ -1548,15 +1568,17 @@ export class CodeTypePanel {
 
             app.innerHTML = \`
                 <div class="editor-header">
-                    <span class="file-path">race.ts</span>
-                    <div class="stats-bar">
-                        <div class="stat">
-                            <span>WPM:</span>
-                            <span class="stat-value" id="wpm">0</span>
-                        </div>
-                        <div class="stat">
-                            <span>Progress:</span>
-                            <span class="stat-value" id="progress">0%</span>
+                    <div class="editor-header-left">
+                        <span class="file-path">\${fileLabel}</span>
+                        <div class="stats-bar">
+                            <div class="stat">
+                                <span>WPM:</span>
+                                <span class="stat-value" id="wpm">0</span>
+                            </div>
+                            <div class="stat">
+                                <span>Progress:</span>
+                                <span class="stat-value" id="progress">0%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1771,7 +1793,7 @@ export class CodeTypePanel {
     }
 
     public dispose() {
-        CodeTypePanel.currentPanel = undefined;
+        CodeTypePanel._panels.delete(this);
         this._panel.dispose();
         while (this._disposables.length) {
             const x = this._disposables.pop();

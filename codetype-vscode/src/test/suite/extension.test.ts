@@ -21,6 +21,7 @@ suite('Extension Test Suite', () => {
         const expectedCommands = [
             'codetype.start',
             'codetype.solo',
+            'codetype.team',
             'codetype.stats',
             'codetype.login',
             'codetype.logout'

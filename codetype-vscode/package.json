@@ -1,7 +1,7 @@
 {
   "name": "codetype",
   "displayName": "CodeType",
-  "description": "Speed typing practice for developers. Improve your coding speed while looking productive.",
+  "description": "Speed typing game for developers. Improve your coding speed while looking productive.",
   "version": "1.0.0",
   "publisher": "codetype",
   "license": "MIT",
@@ -22,7 +22,7 @@
   "keywords": [
     "typing",
     "productivity",
-    "typing-practice",
+    "typing-game",
     "speed-typing",
     "developer-tools",
     "vibe-coding"
@@ -35,6 +35,7 @@
   "activationEvents": [
     "onCommand:codetype.start",
     "onCommand:codetype.solo",
+    "onCommand:codetype.team",
     "onCommand:codetype.stats",
     "onCommand:codetype.login",
     "onCommand:codetype.logout",
@@ -45,12 +46,17 @@
     "commands": [
       {
         "command": "codetype.start",
-        "title": "Start Typing Practice",
+        "title": "Open CodeType",
         "category": "CodeType"
       },
       {
         "command": "codetype.solo",
-        "title": "Quick Practice",
+        "title": "Start Solo Game",
+        "category": "CodeType"
+      },
+      {
+        "command": "codetype.team",
+        "title": "Challenge Colleagues",
         "category": "CodeType"
       },
       {
@@ -85,7 +91,7 @@
         "codetype.useWorkspaceCode": {
           "type": "boolean",
           "default": true,
-          "description": "Use code from your workspace for typing practice"
+          "description": "Use code from your workspace for the typing game"
         }
       }
     },

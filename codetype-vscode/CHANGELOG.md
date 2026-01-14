@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.0.0] - 2024-XX-XX
 
 ### Added
-- **Solo Mode**: Practice typing with real code snippets
+- **Solo Mode**: Play a typing game with real code snippets
   - WPM (words per minute) calculation
   - Accuracy tracking
   - Progress indicator
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Race against friends with live position updates
 
 - **Stealth UI**: Looks like normal coding
-  - Opens as "utils.ts" tab
+  - Opens as a normal file tab (solo.ts, stats.ts, team.ts)
   - Grey pending text, highlighted typed text
   - Authentic VS Code editor styling
   - Line numbers and code formatting

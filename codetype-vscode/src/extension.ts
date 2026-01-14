@@ -11,7 +11,7 @@ let authService: AuthService;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('CodeType extension is activating...');
-    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to start.');
+    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to play.');
 
     // Initialize services
     authService = new AuthService(context);
@@ -29,7 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
                     authService.handleAuthCallback(uri).then((success) => {
                         if (success) {
                             // Refresh the panel if open
-                            CodeTypePanel.refresh();
+                            CodeTypePanel.refreshAll();
                         }
                     });
                 }
@@ -47,6 +47,10 @@ export function activate(context: vscode.ExtensionContext) {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'solo');
         }),
 
+        vscode.commands.registerCommand('codetype.team', () => {
+            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'team');
+        }),
+
         vscode.commands.registerCommand('codetype.stats', () => {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'stats');
         }),
@@ -57,7 +61,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         vscode.commands.registerCommand('codetype.logout', async () => {
             await authService.logout();
-            CodeTypePanel.refresh();
+            CodeTypePanel.refreshAll();
         })
     );
 

@@ -19,7 +19,7 @@ suite('WebView UI Test Suite', () => {
             await vscode.commands.executeCommand('codetype.start');
             await sleep(500);
 
-            // The panel should be named "utils.ts" to look like a normal file
+            // The panel should be named like a normal file (menu.ts, solo.ts, stats.ts, team.ts)
             // WebView panels don't show as activeTextEditor, but command should succeed
             assert.ok(true, 'Panel opened successfully');
         });
@@ -30,8 +30,8 @@ suite('WebView UI Test Suite', () => {
             await vscode.commands.executeCommand('codetype.start');
             await sleep(300);
 
-            // Should not crash or create multiple panels
-            assert.ok(true, 'Multiple opens handled');
+            // Should allow multiple panels without errors
+            assert.ok(true, 'Multiple panels opened');
         });
     });
 
@@ -47,6 +47,14 @@ suite('WebView UI Test Suite', () => {
             await sleep(1000);
             // If no error thrown, code was loaded
             assert.ok(true, 'Code sample loaded');
+        });
+    });
+
+    suite('Team Mode', () => {
+        test('should open team options view', async () => {
+            await vscode.commands.executeCommand('codetype.team');
+            await sleep(500);
+            assert.ok(true, 'Team mode opened');
         });
     });
 
