@@ -305,4 +305,48 @@ export class ApiClient {
     getCurrentUser() {
         return this.authService.getCurrentUser();
     }
+
+    /**
+     * Create a multiplayer room
+     */
+    async createRoom(hostId: string, hostUsername: string): Promise<string | null> {
+        if (OFFLINE_MODE) {
+            return null;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE}/rooms`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ hostId, hostUsername })
+            });
+
+            if (!response.ok) return null;
+
+            const data = await response.json() as { code: string };
+            return data.code;
+        } catch (error) {
+            console.error('Failed to create room:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get WebSocket URL for room
+     */
+    getWebSocketUrl(roomCode: string, userId: string, username: string): string | null {
+        if (OFFLINE_MODE || !API_BASE) {
+            return null;
+        }
+
+        const wsBase = API_BASE.replace('https://', 'wss://').replace('http://', 'ws://');
+        return `${wsBase}/rooms/${roomCode}/ws?userId=${encodeURIComponent(userId)}&username=${encodeURIComponent(username)}`;
+    }
+
+    /**
+     * Get API base URL (for sharing links)
+     */
+    getApiBaseUrl(): string {
+        return API_BASE;
+    }
 }

@@ -3,7 +3,7 @@ import { ApiClient } from '../api';
 import { CodeSampleProvider } from '../codeSamples';
 import { AuthService } from '../auth';
 
-type GameMode = 'menu' | 'solo' | 'leaderboard' | 'stats' | 'playing';
+type GameMode = 'menu' | 'solo' | 'leaderboard' | 'stats' | 'playing' | 'multiplayer' | 'lobby';
 
 export class CodeTypePanel {
     public static currentPanel: CodeTypePanel | undefined;
@@ -147,6 +147,46 @@ export class CodeTypePanel {
 
             case 'navigate':
                 this.setMode(message.mode);
+                break;
+
+            case 'createRoom':
+                const config = vscode.workspace.getConfiguration('codetype');
+                const userId = config.get<string>('userId') || 'anonymous';
+                const displayName = message.displayName || 'Player';
+                const roomCode = await this._api.createRoom(userId, displayName);
+                if (roomCode) {
+                    const wsUrl = this._api.getWebSocketUrl(roomCode, userId, displayName);
+                    this._panel.webview.postMessage({
+                        type: 'roomCreated',
+                        roomCode,
+                        wsUrl,
+                        userId
+                    });
+                } else {
+                    this._panel.webview.postMessage({ type: 'error', message: 'Failed to create room. Please check your connection.' });
+                }
+                break;
+
+            case 'joinRoom':
+                const joinConfig = vscode.workspace.getConfiguration('codetype');
+                const joinUserId = joinConfig.get<string>('userId') || 'anonymous';
+                const joinDisplayName = message.displayName || 'Player';
+                const joinWsUrl = this._api.getWebSocketUrl(message.roomCode.toUpperCase(), joinUserId, joinDisplayName);
+                if (joinWsUrl) {
+                    this._panel.webview.postMessage({
+                        type: 'roomJoined',
+                        roomCode: message.roomCode.toUpperCase(),
+                        wsUrl: joinWsUrl,
+                        userId: joinUserId
+                    });
+                } else {
+                    this._panel.webview.postMessage({ type: 'error', message: 'Failed to join room.' });
+                }
+                break;
+
+            case 'getCodeForMultiplayer':
+                const multiplayerCode = await this._codeSamples.getRandomSample(true);
+                this._panel.webview.postMessage({ type: 'multiplayerCode', code: multiplayerCode });
                 break;
         }
     }
@@ -529,6 +569,205 @@ export class CodeTypePanel {
             background: var(--vscode-button-secondaryBackground);
             color: var(--vscode-editor-foreground);
         }
+
+        /* Multiplayer styles */
+        .lobby-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            gap: 24px;
+            padding: 20px;
+        }
+
+        .room-code {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+            letter-spacing: 4px;
+            background: var(--vscode-editorWidget-background);
+            padding: 16px 32px;
+            border-radius: 4px;
+        }
+
+        .invite-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--vscode-editorWidget-background);
+            padding: 12px 16px;
+            border-radius: 4px;
+            font-size: 12px;
+            max-width: 400px;
+        }
+
+        .invite-link input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--vscode-editor-foreground);
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+        }
+
+        .copy-btn {
+            background: var(--vscode-button-secondaryBackground);
+            border: none;
+            color: var(--vscode-button-secondaryForeground);
+            padding: 6px 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 11px;
+            border-radius: 2px;
+        }
+
+        .copy-btn:hover {
+            background: var(--vscode-button-secondaryHoverBackground);
+        }
+
+        .players-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 250px;
+        }
+
+        .player-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: var(--vscode-editorWidget-background);
+            padding: 12px 16px;
+            border-radius: 4px;
+        }
+
+        .player-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--vscode-button-secondaryBackground);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .player-name {
+            flex: 1;
+            color: var(--vscode-editor-foreground);
+        }
+
+        .player-host {
+            font-size: 10px;
+            color: var(--vscode-textLink-foreground);
+            background: var(--vscode-badge-background);
+            padding: 2px 6px;
+            border-radius: 2px;
+        }
+
+        .player-progress {
+            width: 100px;
+            height: 4px;
+            background: var(--vscode-editorWidget-background);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .player-progress-fill {
+            height: 100%;
+            background: var(--vscode-textLink-foreground);
+            transition: width 0.2s;
+        }
+
+        .player-wpm {
+            min-width: 60px;
+            text-align: right;
+            font-size: 13px;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .countdown-number {
+            font-size: 120px;
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+            animation: countdownPulse 1s ease-out;
+        }
+
+        @keyframes countdownPulse {
+            0% { transform: scale(1.5); opacity: 0; }
+            50% { opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .join-room-input {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .join-room-input input {
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+            color: var(--vscode-input-foreground);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            width: 140px;
+            border-radius: 2px;
+        }
+
+        .join-room-input input::placeholder {
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .multiplayer-results {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .result-place {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: var(--vscode-editorWidget-background);
+            border-radius: 4px;
+        }
+
+        .result-place.first { border-left: 3px solid #ffd700; }
+        .result-place.second { border-left: 3px solid #c0c0c0; }
+        .result-place.third { border-left: 3px solid #cd7f32; }
+
+        .result-rank {
+            font-size: 24px;
+            font-weight: bold;
+            min-width: 40px;
+        }
+
+        .result-rank.first { color: #ffd700; }
+        .result-rank.second { color: #c0c0c0; }
+        .result-rank.third { color: #cd7f32; }
     `;
     }
 
@@ -553,7 +792,16 @@ export class CodeTypePanel {
             currentTimeframe: 'weekly',
             isAuthenticated: ${isAuthenticated},
             user: ${userJson},
-            streakData: null
+            streakData: null,
+            // Multiplayer state
+            roomCode: null,
+            wsConnection: null,
+            players: [],
+            isHost: false,
+            userId: null,
+            displayName: '${username}' || 'Player',
+            countdownValue: null,
+            multiplayerResults: null
         };
 
         function init() {
@@ -606,6 +854,10 @@ export class CodeTypePanel {
                         <button class="menu-btn menu-btn-primary" onclick="startSolo()">
                             <span class="icon">▶</span>
                             <span>Start Practice</span>
+                        </button>
+                        <button class="menu-btn" onclick="showMultiplayerOptions()">
+                            <span class="icon">👥</span>
+                            <span>Challenge Colleagues</span>
                         </button>
                         <button class="menu-btn" onclick="showLeaderboard()">
                             <span class="icon">◆</span>
@@ -1094,6 +1346,438 @@ export class CodeTypePanel {
             vscode.postMessage({ type: 'logout' });
         }
 
+        // Multiplayer functions
+        function showMultiplayerOptions() {
+            const app = document.getElementById('app');
+            app.innerHTML = \`
+                <button class="back-btn" onclick="goToMenu()">← Back</button>
+                <div class="menu-container">
+                    <div class="menu-title">Challenge Colleagues</div>
+                    <div class="menu-subtitle">Race against your team!</div>
+
+                    <div style="margin-bottom: 24px;">
+                        <label style="color: var(--vscode-descriptionForeground); font-size: 12px; display: block; margin-bottom: 8px;">Your display name:</label>
+                        <input type="text" id="displayNameInput" value="\${state.displayName}"
+                            style="background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); color: var(--vscode-input-foreground); padding: 8px 12px; font-family: inherit; font-size: 14px; width: 200px; border-radius: 2px;"
+                            placeholder="Enter your name" />
+                    </div>
+
+                    <div class="menu-buttons">
+                        <button class="menu-btn menu-btn-primary" onclick="createRoom()">
+                            <span class="icon">+</span>
+                            <span>Create Room</span>
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 32px; text-align: center;">
+                        <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-bottom: 12px;">Or join an existing room:</div>
+                        <div class="join-room-input">
+                            <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" />
+                            <button class="menu-btn menu-btn-primary" onclick="joinRoom()" style="padding: 8px 16px;">Join</button>
+                        </div>
+                    </div>
+                </div>
+            \`;
+        }
+
+        function createRoom() {
+            const displayNameInput = document.getElementById('displayNameInput');
+            state.displayName = displayNameInput?.value || 'Player';
+            vscode.postMessage({ type: 'createRoom', displayName: state.displayName });
+            renderLoading('Creating room...');
+        }
+
+        function joinRoom() {
+            const roomCodeInput = document.getElementById('roomCodeInput');
+            const displayNameInput = document.getElementById('displayNameInput');
+            const roomCode = roomCodeInput?.value?.toUpperCase();
+            state.displayName = displayNameInput?.value || 'Player';
+
+            if (!roomCode || roomCode.length !== 6) {
+                alert('Please enter a valid 6-character room code');
+                return;
+            }
+
+            vscode.postMessage({ type: 'joinRoom', roomCode, displayName: state.displayName });
+            renderLoading('Joining room...');
+        }
+
+        function connectToRoom(roomCode, wsUrl, userId) {
+            state.roomCode = roomCode;
+            state.userId = userId;
+
+            try {
+                state.wsConnection = new WebSocket(wsUrl);
+
+                state.wsConnection.onopen = () => {
+                    console.log('Connected to room');
+                };
+
+                state.wsConnection.onmessage = (event) => {
+                    const message = JSON.parse(event.data);
+                    handleWsMessage(message);
+                };
+
+                state.wsConnection.onclose = () => {
+                    console.log('Disconnected from room');
+                    if (state.mode === 'lobby' || state.mode === 'multiplayer') {
+                        state.wsConnection = null;
+                        goToMenu();
+                    }
+                };
+
+                state.wsConnection.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                    alert('Connection error. Please try again.');
+                    goToMenu();
+                };
+            } catch (error) {
+                console.error('Failed to connect:', error);
+                alert('Failed to connect to room');
+                goToMenu();
+            }
+        }
+
+        function handleWsMessage(message) {
+            switch (message.type) {
+                case 'joined':
+                    state.isHost = message.data.isHost;
+                    state.players = message.data.players;
+                    state.mode = 'lobby';
+                    renderLobby();
+                    break;
+
+                case 'playerJoined':
+                case 'playerLeft':
+                    state.players = message.data.players;
+                    if (state.mode === 'lobby') {
+                        renderLobby();
+                    }
+                    break;
+
+                case 'countdown':
+                    state.countdownValue = message.data.count;
+                    renderCountdown(message.data.count);
+                    break;
+
+                case 'gameStart':
+                    state.code = message.data.codeSnippet;
+                    state.currentPos = 0;
+                    state.errors = 0;
+                    state.startTime = Date.now();
+                    state.countdownValue = null;
+                    state.mode = 'multiplayer';
+                    renderMultiplayerGame();
+                    break;
+
+                case 'progress':
+                    state.players = message.data.players;
+                    updatePlayersProgress();
+                    break;
+
+                case 'playerFinished':
+                    // Update player in list
+                    const finishedPlayer = state.players.find(p => p.userId === message.data.userId);
+                    if (finishedPlayer) {
+                        finishedPlayer.finished = true;
+                        finishedPlayer.wpm = message.data.wpm;
+                    }
+                    updatePlayersProgress();
+                    break;
+
+                case 'gameEnd':
+                    state.multiplayerResults = message.data.results;
+                    renderMultiplayerResults();
+                    break;
+
+                case 'reset':
+                    state.players = message.data.players;
+                    state.code = '';
+                    state.currentPos = 0;
+                    state.errors = 0;
+                    state.startTime = null;
+                    state.mode = 'lobby';
+                    renderLobby();
+                    break;
+            }
+        }
+
+        function renderLobby() {
+            const app = document.getElementById('app');
+            const inviteUrl = window.location.origin + '?room=' + state.roomCode;
+
+            const playersHtml = state.players.map(p => \`
+                <div class="player-item">
+                    <div class="player-avatar">\${p.username.charAt(0).toUpperCase()}</div>
+                    <span class="player-name">\${p.username}</span>
+                    \${p.isHost ? '<span class="player-host">HOST</span>' : ''}
+                </div>
+            \`).join('');
+
+            app.innerHTML = \`
+                <button class="back-btn" onclick="leaveLobby()">← Leave</button>
+                <div class="lobby-container">
+                    <div style="color: var(--vscode-descriptionForeground); font-size: 12px;">Room Code</div>
+                    <div class="room-code">\${state.roomCode}</div>
+
+                    <div class="invite-link">
+                        <span style="color: var(--vscode-descriptionForeground);">Share this code with colleagues to invite them!</span>
+                    </div>
+
+                    <div style="margin-top: 16px;">
+                        <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-bottom: 8px;">Players (\${state.players.length})</div>
+                        <div class="players-list">
+                            \${playersHtml}
+                        </div>
+                    </div>
+
+                    \${state.isHost ? \`
+                        <button class="menu-btn menu-btn-primary" onclick="startMultiplayerGame()" style="margin-top: 24px; width: 200px; justify-content: center;" \${state.players.length < 1 ? 'disabled' : ''}>
+                            Start Game
+                        </button>
+                        <div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-top: 8px;">
+                            \${state.players.length < 2 ? 'Waiting for more players...' : 'Ready to start!'}
+                        </div>
+                    \` : \`
+                        <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-top: 24px;">
+                            Waiting for host to start the game...
+                        </div>
+                    \`}
+                </div>
+            \`;
+        }
+
+        function renderCountdown(count) {
+            let overlay = document.getElementById('countdownOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'countdownOverlay';
+                overlay.className = 'countdown-overlay';
+                document.body.appendChild(overlay);
+            }
+            overlay.innerHTML = \`<div class="countdown-number">\${count}</div>\`;
+        }
+
+        function startMultiplayerGame() {
+            if (!state.isHost || !state.wsConnection) return;
+
+            vscode.postMessage({ type: 'getCodeForMultiplayer' });
+        }
+
+        function sendGameStart(codeSnippet) {
+            if (state.wsConnection) {
+                state.wsConnection.send(JSON.stringify({
+                    type: 'start',
+                    data: { codeSnippet }
+                }));
+            }
+        }
+
+        function renderMultiplayerGame() {
+            // Remove countdown overlay if exists
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) overlay.remove();
+
+            const app = document.getElementById('app');
+
+            const playersHtml = state.players.map(p => \`
+                <div class="player-item" id="player-\${p.userId}">
+                    <div class="player-avatar">\${p.username.charAt(0).toUpperCase()}</div>
+                    <span class="player-name">\${p.username}</span>
+                    <div class="player-progress">
+                        <div class="player-progress-fill" style="width: \${p.progress || 0}%"></div>
+                    </div>
+                    <span class="player-wpm">\${p.wpm || 0} WPM</span>
+                </div>
+            \`).join('');
+
+            app.innerHTML = \`
+                <div class="editor-header">
+                    <span class="file-path">race.ts</span>
+                    <div class="stats-bar">
+                        <div class="stat">
+                            <span>WPM:</span>
+                            <span class="stat-value" id="wpm">0</span>
+                        </div>
+                        <div class="stat">
+                            <span>Progress:</span>
+                            <span class="stat-value" id="progress">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border);">
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        \${playersHtml}
+                    </div>
+                </div>
+                <div class="editor-container">
+                    <div class="line-numbers" id="lineNumbers"></div>
+                    <div class="code-area" id="codeArea">
+                        <input type="text" class="hidden-input" id="hiddenInput" autofocus />
+                        <div id="codeContent"></div>
+                    </div>
+                </div>
+            \`;
+
+            renderCode();
+            setupMultiplayerInput();
+        }
+
+        function setupMultiplayerInput() {
+            const input = document.getElementById('hiddenInput');
+            const codeArea = document.getElementById('codeArea');
+
+            codeArea.addEventListener('click', () => input.focus());
+            input.focus();
+
+            input.addEventListener('keydown', (e) => {
+                if (state.currentPos >= state.code.length) return;
+
+                const expectedChar = state.code[state.currentPos];
+
+                if (e.key === 'Tab') {
+                    e.preventDefault();
+                    if (expectedChar === ' ') handleMultiplayerChar(' ');
+                    return;
+                }
+
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (expectedChar === '\\n') handleMultiplayerChar('\\n');
+                    return;
+                }
+
+                if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    if (state.currentPos > 0) {
+                        state.currentPos--;
+                        renderCode();
+                        sendProgress();
+                    }
+                    return;
+                }
+
+                if (e.key.length === 1) {
+                    e.preventDefault();
+                    handleMultiplayerChar(e.key);
+                }
+            });
+        }
+
+        function handleMultiplayerChar(char) {
+            const expectedChar = state.code[state.currentPos];
+
+            if (char === expectedChar) {
+                state.currentPos++;
+                const charEl = document.querySelector(\`[data-idx="\${state.currentPos - 1}"]\`);
+                if (charEl) charEl.className = 'char correct';
+                const nextEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
+                if (nextEl) nextEl.className = 'char current';
+            } else {
+                state.errors++;
+                const charEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
+                if (charEl) {
+                    charEl.className = 'char error';
+                    setTimeout(() => { charEl.className = 'char current'; }, 150);
+                }
+            }
+
+            updateMultiplayerStats();
+            sendProgress();
+
+            if (state.currentPos >= state.code.length) {
+                finishMultiplayerGame();
+            }
+        }
+
+        function updateMultiplayerStats() {
+            const wpm = calculateWPM();
+            const progress = Math.round((state.currentPos / state.code.length) * 100);
+
+            document.getElementById('wpm').textContent = wpm;
+            document.getElementById('progress').textContent = progress + '%';
+        }
+
+        function sendProgress() {
+            if (state.wsConnection) {
+                const progress = Math.round((state.currentPos / state.code.length) * 100);
+                const wpm = calculateWPM();
+                state.wsConnection.send(JSON.stringify({
+                    type: 'progress',
+                    data: { progress, wpm }
+                }));
+            }
+        }
+
+        function finishMultiplayerGame() {
+            const wpm = calculateWPM();
+            if (state.wsConnection) {
+                state.wsConnection.send(JSON.stringify({
+                    type: 'finish',
+                    data: { wpm }
+                }));
+            }
+        }
+
+        function updatePlayersProgress() {
+            state.players.forEach(p => {
+                const playerEl = document.getElementById(\`player-\${p.userId}\`);
+                if (playerEl) {
+                    const progressFill = playerEl.querySelector('.player-progress-fill');
+                    const wpmEl = playerEl.querySelector('.player-wpm');
+                    if (progressFill) progressFill.style.width = (p.progress || 0) + '%';
+                    if (wpmEl) wpmEl.textContent = (p.wpm || 0) + ' WPM';
+                }
+            });
+        }
+
+        function renderMultiplayerResults() {
+            const app = document.getElementById('app');
+            const results = state.multiplayerResults || [];
+
+            const resultsHtml = results.map((r, i) => {
+                const placeClass = i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : '';
+                return \`
+                    <div class="result-place \${placeClass}">
+                        <span class="result-rank \${placeClass}">#\${i + 1}</span>
+                        <div class="player-avatar">\${r.username.charAt(0).toUpperCase()}</div>
+                        <span class="player-name" style="flex: 1;">\${r.username}</span>
+                        <span style="color: var(--vscode-textLink-foreground); font-size: 18px; font-weight: bold;">\${r.wpm} WPM</span>
+                    </div>
+                \`;
+            }).join('');
+
+            app.innerHTML = \`
+                <div class="menu-container">
+                    <div class="menu-title">Race Results</div>
+                    <div class="multiplayer-results">
+                        \${resultsHtml}
+                    </div>
+                    <div class="menu-buttons" style="margin-top: 24px;">
+                        \${state.isHost ? \`
+                            <button class="menu-btn menu-btn-primary" onclick="waitForReset()">Play Again</button>
+                        \` : ''}
+                        <button class="menu-btn" onclick="leaveLobby()">Leave Room</button>
+                    </div>
+                </div>
+            \`;
+        }
+
+        function waitForReset() {
+            renderLoading('Starting new game...');
+        }
+
+        function leaveLobby() {
+            if (state.wsConnection) {
+                state.wsConnection.close();
+                state.wsConnection = null;
+            }
+            state.roomCode = null;
+            state.players = [];
+            state.isHost = false;
+            goToMenu();
+        }
+
         window.addEventListener('message', event => {
             const message = event.data;
 
@@ -1114,6 +1798,18 @@ export class CodeTypePanel {
                 case 'error':
                     alert(message.message);
                     goToMenu();
+                    break;
+
+                case 'roomCreated':
+                    connectToRoom(message.roomCode, message.wsUrl, message.userId);
+                    break;
+
+                case 'roomJoined':
+                    connectToRoom(message.roomCode, message.wsUrl, message.userId);
+                    break;
+
+                case 'multiplayerCode':
+                    sendGameStart(message.code);
                     break;
             }
         });
