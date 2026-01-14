@@ -97,6 +97,11 @@ export class CodeTypePanel {
                 this._panel.webview.postMessage({ type: 'loadCode', code });
                 break;
 
+            case 'refreshCode':
+                const newCode = await this._codeSamples.getRandomSample(true);
+                this._panel.webview.postMessage({ type: 'loadCode', code: newCode });
+                break;
+
             case 'gameFinished':
                 this._api.submitScore(message.result);
                 const stats = this._api.getLocalStats();
@@ -505,6 +510,25 @@ export class CodeTypePanel {
             margin-bottom: 16px;
             font-size: 18px;
         }
+
+        .refresh-btn {
+            background: transparent;
+            border: none;
+            color: var(--vscode-descriptionForeground);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-family: inherit;
+            border-radius: 2px;
+        }
+
+        .refresh-btn:hover {
+            background: var(--vscode-button-secondaryBackground);
+            color: var(--vscode-editor-foreground);
+        }
     `;
     }
 
@@ -632,6 +656,9 @@ export class CodeTypePanel {
                             <span>Progress:</span>
                             <span class="stat-value" id="progress">0%</span>
                         </div>
+                        <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
+                            ↻ New Snippet
+                        </button>
                     </div>
                 </div>
                 <div class="editor-container">
@@ -1036,6 +1063,11 @@ export class CodeTypePanel {
             state.mode = 'solo';
             vscode.postMessage({ type: 'startSolo' });
             renderLoading('Preparing code...');
+        }
+
+        function refreshCode() {
+            vscode.postMessage({ type: 'refreshCode' });
+            renderLoading('Loading new snippet...');
         }
 
         function showLeaderboard() {
