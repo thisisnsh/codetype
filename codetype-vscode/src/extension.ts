@@ -40,7 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Register commands
     context.subscriptions.push(
         vscode.commands.registerCommand('codetype.start', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'menu');
+            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'stats');
         }),
 
         vscode.commands.registerCommand('codetype.solo', () => {

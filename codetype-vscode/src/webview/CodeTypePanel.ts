@@ -278,10 +278,6 @@ export class CodeTypePanel {
             gap: 16px;
         }
 
-        .file-path {
-            color: var(--vscode-descriptionForeground);
-        }
-
         .stats-bar {
             display: flex;
             align-items: center;
@@ -378,7 +374,7 @@ export class CodeTypePanel {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             height: 100%;
             gap: 20px;
             padding: 32px;
@@ -424,11 +420,6 @@ export class CodeTypePanel {
             background: var(--vscode-button-secondaryHoverBackground);
         }
 
-        .menu-btn .icon {
-            font-size: 16px;
-            opacity: 0.8;
-        }
-
         .menu-btn-primary {
             background: var(--vscode-button-background);
             color: var(--vscode-button-foreground);
@@ -449,7 +440,7 @@ export class CodeTypePanel {
             background: var(--vscode-editor-background);
             display: flex;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             flex-direction: column;
             gap: 20px;
             z-index: 100;
@@ -497,6 +488,7 @@ export class CodeTypePanel {
             padding: 20px;
             max-width: 600px;
             margin: 0;
+            text-align: left;
         }
 
         .leaderboard-tabs {
@@ -583,7 +575,7 @@ export class CodeTypePanel {
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            justify-content: center;
+            justify-content: flex-start;
             height: 100%;
             gap: 24px;
             padding: 20px;
@@ -792,7 +784,6 @@ export class CodeTypePanel {
 
         return `
         const vscode = acquireVsCodeApi();
-        const fileLabel = ${JSON.stringify(this._panelLabel)};
         const state = {
             mode: '${this._currentMode}',
             code: '',
@@ -849,31 +840,20 @@ export class CodeTypePanel {
                 </div>\`;
 
             const authButton = state.isAuthenticated
-                ? \`<button class="menu-btn" onclick="logout()">
-                    <span class="icon">⏻</span>
-                    <span>Sign Out</span>
-                </button>\`
-                : \`<button class="menu-btn" onclick="login()">
-                    <span class="icon">→</span>
-                    <span>Sign In</span>
-                </button>\`;
+                ? \`<button class="menu-btn" onclick="logout()">Sign Out</button>\`
+                : \`<button class="menu-btn" onclick="login()">Sign In</button>\`;
 
             app.innerHTML = \`
                 <div class="menu-container">
                     <div class="menu-title">CodeType</div>
                     <div class="menu-subtitle">Typing game for developers</div>
                     <div class="menu-buttons">
-                        <button class="menu-btn menu-btn-primary" onclick="startSolo()">
-                            <span class="icon">▶</span>
-                            <span>Start Solo Game</span>
-                        </button>
+                        <button class="menu-btn menu-btn-primary" onclick="startSolo()">Start Solo Game</button>
                         <button class="menu-btn" onclick="showMultiplayerOptions()">
-                            <span class="icon">👥</span>
-                            <span>Challenge Colleagues</span>
+                            Challenge Colleagues
                         </button>
                         <button class="menu-btn" onclick="showStats()">
-                            <span class="icon">≡</span>
-                            <span>My Stats</span>
+                            My Stats
                         </button>
                         \${authButton}
                     </div>
@@ -903,7 +883,6 @@ export class CodeTypePanel {
             app.innerHTML = \`
                 <div class="editor-header">
                     <div class="editor-header-left">
-                        <span class="file-path">\${fileLabel}</span>
                         <div class="stats-bar">
                             <div class="stat">
                                 <span>WPM:</span>
@@ -920,7 +899,7 @@ export class CodeTypePanel {
                         </div>
                     </div>
                     <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
-                        ↻ New Snippet
+                        New Snippet
                     </button>
                 </div>
                 <div class="editor-container">
@@ -1108,7 +1087,7 @@ export class CodeTypePanel {
                         </div>
                         <div class="menu-buttons" style="margin-top: 20px; width: auto;">
                             <button class="menu-btn menu-btn-primary" onclick="startSolo()">Play Again</button>
-                            <button class="menu-btn" onclick="goToMenu()">Menu</button>
+                            <button class="menu-btn" onclick="goToMenu()">My Stats</button>
                         </div>
                     </div>
                 </div>
@@ -1130,10 +1109,7 @@ export class CodeTypePanel {
                     ? '<div style="color: var(--vscode-descriptionForeground); text-align: left; padding: 20px;">No activity data yet. Start playing!</div>'
                     : \`<div style="text-align: left; padding: 20px;">
                         <div style="color: var(--vscode-descriptionForeground); margin-bottom: 12px;">Sign in to track your daily streak and sync progress across devices</div>
-                        <button class="menu-btn" onclick="login()" style="display: inline-flex; padding: 8px 16px;">
-                            <span class="icon">→</span>
-                            <span>Sign In</span>
-                        </button>
+                        <button class="menu-btn" onclick="login()" style="display: inline-flex; padding: 8px 16px;">Sign In</button>
                     </div>\`);
 
             const app = document.getElementById('app');
@@ -1293,8 +1269,7 @@ export class CodeTypePanel {
         }
 
         function goToMenu() {
-            state.mode = 'menu';
-            renderMenu();
+            showStats();
         }
 
         function startSolo() {
@@ -1339,10 +1314,7 @@ export class CodeTypePanel {
                     </div>
 
                     <div class="menu-buttons">
-                        <button class="menu-btn menu-btn-primary" onclick="createRoom()">
-                            <span class="icon">+</span>
-                            <span>Create Room</span>
-                        </button>
+                        <button class="menu-btn menu-btn-primary" onclick="createRoom()">Create Room</button>
                     </div>
 
                     <div style="margin-top: 32px; text-align: left;">
@@ -1569,7 +1541,6 @@ export class CodeTypePanel {
             app.innerHTML = \`
                 <div class="editor-header">
                     <div class="editor-header-left">
-                        <span class="file-path">\${fileLabel}</span>
                         <div class="stats-bar">
                             <div class="stat">
                                 <span>WPM:</span>
