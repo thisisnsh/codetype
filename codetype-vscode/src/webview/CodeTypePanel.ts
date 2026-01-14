@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ApiClient } from '../api';
 import { CodeSampleProvider } from '../codeSamples';
 
-type GameMode = 'menu' | 'solo' | 'create-room' | 'join-room' | 'leaderboard' | 'stats' | 'playing' | 'multiplayer-lobby' | 'multiplayer-playing';
+type GameMode = 'menu' | 'solo' | 'leaderboard' | 'stats' | 'playing';
 
 export class CodeTypePanel {
     public static currentPanel: CodeTypePanel | undefined;
@@ -13,15 +13,13 @@ export class CodeTypePanel {
     private readonly _codeSamples: CodeSampleProvider;
     private _disposables: vscode.Disposable[] = [];
     private _currentMode: GameMode = 'menu';
-    private _roomCode: string = '';
 
     public static createOrShow(
         extensionUri: vscode.Uri,
         context: vscode.ExtensionContext,
         api: ApiClient,
         codeSamples: CodeSampleProvider,
-        mode: GameMode,
-        roomCode?: string
+        mode: GameMode
     ) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn
@@ -29,7 +27,7 @@ export class CodeTypePanel {
 
         if (CodeTypePanel.currentPanel) {
             CodeTypePanel.currentPanel._panel.reveal(column);
-            CodeTypePanel.currentPanel.setMode(mode, roomCode);
+            CodeTypePanel.currentPanel.setMode(mode);
             return;
         }
 
@@ -45,7 +43,7 @@ export class CodeTypePanel {
             }
         );
 
-        CodeTypePanel.currentPanel = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, mode, roomCode);
+        CodeTypePanel.currentPanel = new CodeTypePanel(panel, extensionUri, context, api, codeSamples, mode);
     }
 
     private constructor(
@@ -54,8 +52,7 @@ export class CodeTypePanel {
         context: vscode.ExtensionContext,
         api: ApiClient,
         codeSamples: CodeSampleProvider,
-        mode: GameMode,
-        roomCode?: string
+        mode: GameMode
     ) {
         this._panel = panel;
         this._extensionUri = extensionUri;
@@ -63,7 +60,6 @@ export class CodeTypePanel {
         this._api = api;
         this._codeSamples = codeSamples;
         this._currentMode = mode;
-        this._roomCode = roomCode || '';
 
         this._update();
 
@@ -78,9 +74,8 @@ export class CodeTypePanel {
         );
     }
 
-    public setMode(mode: GameMode, roomCode?: string) {
+    public setMode(mode: GameMode) {
         this._currentMode = mode;
-        this._roomCode = roomCode || '';
         this._update();
     }
 
@@ -93,7 +88,6 @@ export class CodeTypePanel {
 
             case 'gameFinished':
                 this._api.submitScore(message.result);
-                // Store locally too
                 const stats = this._api.getLocalStats();
                 this._panel.webview.postMessage({
                     type: 'showResults',
@@ -106,37 +100,9 @@ export class CodeTypePanel {
                 });
                 break;
 
-            case 'createRoom':
-                try {
-                    const roomCode = await this._api.createRoom();
-                    this._roomCode = roomCode;
-                    this._connectToRoom(roomCode);
-                    this._panel.webview.postMessage({ type: 'roomCreated', roomCode });
-                } catch (e) {
-                    this._panel.webview.postMessage({ type: 'error', message: 'Failed to create room' });
-                }
-                break;
-
-            case 'joinRoom':
-                this._connectToRoom(message.roomCode);
-                break;
-
-            case 'startMultiplayer':
-                const multiCode = await this._codeSamples.getRandomSample(true);
-                this._api.startGame(multiCode);
-                break;
-
-            case 'updateProgress':
-                this._api.updateProgress(message.progress, message.wpm);
-                break;
-
-            case 'multiplayerFinished':
-                this._api.finishGame(message.result);
-                break;
-
             case 'getLeaderboard':
                 const leaderboard = await this._api.getLeaderboard(message.timeframe || 'weekly');
-                this._panel.webview.postMessage({ type: 'leaderboard', data: leaderboard });
+                this._panel.webview.postMessage({ type: 'leaderboard', data: leaderboard, timeframe: message.timeframe });
                 break;
 
             case 'getStats':
@@ -147,18 +113,7 @@ export class CodeTypePanel {
             case 'navigate':
                 this.setMode(message.mode);
                 break;
-
-            case 'copyRoomCode':
-                vscode.env.clipboard.writeText(message.code);
-                vscode.window.showInformationMessage(`Room code ${message.code} copied!`);
-                break;
         }
-    }
-
-    private _connectToRoom(roomCode: string) {
-        this._api.connectToRoom(roomCode, (type, data) => {
-            this._panel.webview.postMessage({ type: `room_${type}`, data });
-        });
     }
 
     private _update() {
@@ -192,22 +147,6 @@ export class CodeTypePanel {
 
     private _getStyles() {
         return `
-        :root {
-            --bg-primary: #1e1e1e;
-            --bg-secondary: #252526;
-            --bg-tertiary: #2d2d30;
-            --text-primary: #d4d4d4;
-            --text-secondary: #808080;
-            --text-muted: #4a4a4a;
-            --accent: #569cd6;
-            --accent-secondary: #4ec9b0;
-            --success: #4caf50;
-            --warning: #ffb300;
-            --error: #f44336;
-            --line-number: #858585;
-            --highlight-line: #2a2d2e;
-        }
-
         * {
             margin: 0;
             padding: 0;
@@ -215,9 +154,10 @@ export class CodeTypePanel {
         }
 
         body {
-            font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+            font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Fira Code', Consolas, monospace);
+            font-size: var(--vscode-editor-font-size, 14px);
+            background: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
             height: 100vh;
             overflow: hidden;
         }
@@ -230,9 +170,9 @@ export class CodeTypePanel {
 
         /* Editor-like header */
         .editor-header {
-            background: var(--bg-secondary);
+            background: var(--vscode-editorGroupHeader-tabsBackground);
             padding: 8px 16px;
-            border-bottom: 1px solid var(--bg-tertiary);
+            border-bottom: 1px solid var(--vscode-editorGroupHeader-tabsBorder, var(--vscode-panel-border));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -240,13 +180,13 @@ export class CodeTypePanel {
         }
 
         .file-path {
-            color: var(--text-secondary);
+            color: var(--vscode-descriptionForeground);
         }
 
         .stats-bar {
             display: flex;
             gap: 16px;
-            color: var(--text-secondary);
+            color: var(--vscode-descriptionForeground);
         }
 
         .stat {
@@ -256,7 +196,7 @@ export class CodeTypePanel {
         }
 
         .stat-value {
-            color: var(--accent);
+            color: var(--vscode-textLink-foreground);
             font-weight: 600;
         }
 
@@ -268,11 +208,11 @@ export class CodeTypePanel {
         }
 
         .line-numbers {
-            background: var(--bg-secondary);
+            background: var(--vscode-editorGutter-background, var(--vscode-editor-background));
             padding: 16px 12px;
             text-align: right;
-            color: var(--line-number);
-            font-size: 14px;
+            color: var(--vscode-editorLineNumber-foreground);
+            font-size: inherit;
             line-height: 1.6;
             user-select: none;
             min-width: 50px;
@@ -281,7 +221,7 @@ export class CodeTypePanel {
         .code-area {
             flex: 1;
             padding: 16px;
-            font-size: 14px;
+            font-size: inherit;
             line-height: 1.6;
             overflow-y: auto;
             position: relative;
@@ -294,11 +234,7 @@ export class CodeTypePanel {
         }
 
         .code-line.active {
-            background: var(--highlight-line);
-        }
-
-        .code-line.completed {
-            opacity: 0.6;
+            background: var(--vscode-editor-lineHighlightBackground);
         }
 
         .char {
@@ -307,34 +243,30 @@ export class CodeTypePanel {
         }
 
         .char.pending {
-            color: var(--text-muted);
-        }
-
-        .char.typed {
-            color: var(--text-primary);
+            color: var(--vscode-editorLineNumber-foreground);
+            opacity: 0.5;
         }
 
         .char.correct {
-            color: var(--accent-secondary);
+            color: var(--vscode-terminal-ansiGreen, #4ec9b0);
         }
 
         .char.error {
-            color: var(--error);
-            text-decoration: underline;
+            color: var(--vscode-errorForeground);
+            text-decoration: underline wavy;
         }
 
         .char.current {
-            background: var(--accent);
-            color: var(--bg-primary);
+            background: var(--vscode-editor-selectionBackground);
+            color: var(--vscode-editor-foreground);
             animation: blink 1s infinite;
         }
 
         @keyframes blink {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.6; }
         }
 
-        /* Hidden input for capturing keystrokes */
         .hidden-input {
             position: absolute;
             opacity: 0;
@@ -348,57 +280,61 @@ export class CodeTypePanel {
             align-items: center;
             justify-content: center;
             height: 100%;
-            gap: 24px;
+            gap: 20px;
         }
 
         .menu-title {
-            font-size: 32px;
-            color: var(--accent);
-            margin-bottom: 8px;
+            font-size: 28px;
+            color: var(--vscode-textLink-foreground);
+            margin-bottom: 4px;
         }
 
         .menu-subtitle {
-            color: var(--text-secondary);
-            font-size: 14px;
-            margin-bottom: 24px;
+            color: var(--vscode-descriptionForeground);
+            font-size: 13px;
+            margin-bottom: 20px;
         }
 
         .menu-buttons {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            width: 280px;
+            gap: 8px;
+            width: 260px;
         }
 
         .menu-btn {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--text-muted);
-            color: var(--text-primary);
-            padding: 14px 24px;
-            font-size: 14px;
+            background: var(--vscode-button-secondaryBackground);
+            border: 1px solid var(--vscode-button-secondaryBackground);
+            color: var(--vscode-button-secondaryForeground);
+            padding: 10px 16px;
+            font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.15s;
             font-family: inherit;
             text-align: left;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
+            border-radius: 2px;
         }
 
         .menu-btn:hover {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border-color: var(--accent);
+            background: var(--vscode-button-secondaryHoverBackground);
         }
 
         .menu-btn .icon {
-            font-size: 18px;
+            font-size: 16px;
+            opacity: 0.8;
         }
 
         .menu-btn-primary {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border-color: var(--accent);
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border-color: var(--vscode-button-background);
+        }
+
+        .menu-btn-primary:hover {
+            background: var(--vscode-button-hoverBackground);
         }
 
         /* Results overlay */
@@ -408,190 +344,95 @@ export class CodeTypePanel {
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(30, 30, 30, 0.95);
+            background: var(--vscode-editor-background);
             display: flex;
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
             z-index: 100;
         }
 
         .results-card {
-            background: var(--bg-secondary);
-            border: 1px solid var(--bg-tertiary);
-            padding: 32px 48px;
+            background: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-editorWidget-border, var(--vscode-panel-border));
+            padding: 28px 40px;
             text-align: center;
+            border-radius: 4px;
         }
 
         .results-wpm {
-            font-size: 64px;
-            color: var(--accent);
+            font-size: 56px;
+            color: var(--vscode-textLink-foreground);
             font-weight: bold;
         }
 
         .results-label {
-            color: var(--text-secondary);
-            margin-bottom: 24px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 20px;
         }
 
         .results-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 24px;
-            margin: 24px 0;
-        }
-
-        .result-stat {
-            text-align: center;
+            gap: 20px;
+            margin: 20px 0;
         }
 
         .result-stat-value {
-            font-size: 24px;
-            color: var(--text-primary);
+            font-size: 22px;
+            color: var(--vscode-editor-foreground);
         }
 
         .result-stat-label {
-            font-size: 12px;
-            color: var(--text-secondary);
-        }
-
-        /* Multiplayer lobby */
-        .lobby-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 32px;
-        }
-
-        .room-code {
-            font-size: 48px;
-            letter-spacing: 8px;
-            color: var(--accent);
-            font-weight: bold;
-            margin: 16px 0;
-            cursor: pointer;
-        }
-
-        .room-code:hover {
-            opacity: 0.8;
-        }
-
-        .players-list {
-            margin: 24px 0;
-            width: 100%;
-            max-width: 400px;
-        }
-
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            margin: 4px 0;
-        }
-
-        .player-name {
-            color: var(--text-primary);
-        }
-
-        .player-status {
-            color: var(--text-secondary);
-            font-size: 12px;
-        }
-
-        .player-host {
-            color: var(--warning);
-        }
-
-        /* Multiplayer progress bars */
-        .progress-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: var(--bg-secondary);
-            padding: 12px 16px;
-            border-top: 1px solid var(--bg-tertiary);
-        }
-
-        .progress-player {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin: 4px 0;
-        }
-
-        .progress-name {
-            width: 120px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .progress-bar {
-            flex: 1;
-            height: 8px;
-            background: var(--bg-tertiary);
-            border-radius: 4px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: var(--accent);
-            transition: width 0.1s;
-        }
-
-        .progress-wpm {
-            width: 60px;
-            text-align: right;
-            font-size: 12px;
-            color: var(--accent);
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
         }
 
         /* Leaderboard */
         .leaderboard-container {
-            padding: 24px;
+            padding: 20px;
             max-width: 600px;
             margin: 0 auto;
         }
 
         .leaderboard-tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
+            gap: 4px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .leaderboard-tab {
-            padding: 8px 16px;
-            background: var(--bg-tertiary);
+            padding: 6px 12px;
+            background: var(--vscode-button-secondaryBackground);
             border: none;
-            color: var(--text-secondary);
+            color: var(--vscode-button-secondaryForeground);
             cursor: pointer;
             font-family: inherit;
+            font-size: 12px;
+            border-radius: 2px;
         }
 
         .leaderboard-tab.active {
-            background: var(--accent);
-            color: var(--bg-primary);
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
         }
 
         .leaderboard-entry {
             display: flex;
             align-items: center;
-            padding: 12px 16px;
-            background: var(--bg-secondary);
-            margin: 4px 0;
+            padding: 10px 14px;
+            background: var(--vscode-editorWidget-background);
+            margin: 3px 0;
+            border-radius: 2px;
         }
 
         .leaderboard-rank {
-            width: 40px;
-            font-size: 18px;
+            width: 36px;
+            font-size: 16px;
             font-weight: bold;
-            color: var(--warning);
+            color: var(--vscode-descriptionForeground);
         }
 
         .leaderboard-rank.top1 { color: #ffd700; }
@@ -600,52 +441,25 @@ export class CodeTypePanel {
 
         .leaderboard-name {
             flex: 1;
-            color: var(--text-primary);
+            color: var(--vscode-editor-foreground);
         }
 
         .leaderboard-wpm {
-            font-size: 18px;
-            color: var(--accent);
+            font-size: 16px;
+            color: var(--vscode-textLink-foreground);
             font-weight: bold;
-        }
-
-        /* Countdown overlay */
-        .countdown-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(30, 30, 30, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .countdown-number {
-            font-size: 120px;
-            color: var(--accent);
-            font-weight: bold;
-            animation: pulse 1s ease-out;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.5); opacity: 0; }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); opacity: 1; }
         }
 
         /* Back button */
         .back-btn {
             position: absolute;
-            top: 16px;
-            left: 16px;
+            top: 12px;
+            left: 12px;
             background: transparent;
             border: none;
-            color: var(--text-secondary);
+            color: var(--vscode-descriptionForeground);
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             display: flex;
             align-items: center;
             gap: 4px;
@@ -653,7 +467,13 @@ export class CodeTypePanel {
         }
 
         .back-btn:hover {
-            color: var(--text-primary);
+            color: var(--vscode-editor-foreground);
+        }
+
+        .section-title {
+            color: var(--vscode-textLink-foreground);
+            margin-bottom: 16px;
+            font-size: 18px;
         }
     `;
     }
@@ -667,18 +487,14 @@ export class CodeTypePanel {
         const vscode = acquireVsCodeApi();
         const state = {
             mode: '${this._currentMode}',
-            roomCode: '${this._roomCode}',
             username: '${username}',
             code: '',
             currentPos: 0,
             startTime: null,
             errors: 0,
-            players: [],
-            isHost: false,
-            gameStarted: false
+            currentTimeframe: 'weekly'
         };
 
-        // Initialize based on mode
         function init() {
             switch(state.mode) {
                 case 'menu':
@@ -687,14 +503,6 @@ export class CodeTypePanel {
                 case 'solo':
                     vscode.postMessage({ type: 'startSolo' });
                     renderLoading('Preparing code...');
-                    break;
-                case 'create-room':
-                    vscode.postMessage({ type: 'createRoom' });
-                    renderLoading('Creating room...');
-                    break;
-                case 'join-room':
-                    vscode.postMessage({ type: 'joinRoom', roomCode: state.roomCode });
-                    renderLoading('Joining room...');
                     break;
                 case 'leaderboard':
                     vscode.postMessage({ type: 'getLeaderboard', timeframe: 'weekly' });
@@ -711,32 +519,24 @@ export class CodeTypePanel {
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <div class="menu-container">
-                    <div class="menu-title">// CodeType</div>
-                    <div class="menu-subtitle">Speed typing for developers. Look busy, get better.</div>
+                    <div class="menu-title">CodeType</div>
+                    <div class="menu-subtitle">Typing practice for developers</div>
                     <div class="menu-buttons">
                         <button class="menu-btn menu-btn-primary" onclick="startSolo()">
-                            <span class="icon">></span>
-                            <span>Quick Solo Game</span>
-                        </button>
-                        <button class="menu-btn" onclick="createRoom()">
-                            <span class="icon">+</span>
-                            <span>Create Multiplayer Room</span>
-                        </button>
-                        <button class="menu-btn" onclick="promptJoinRoom()">
-                            <span class="icon">#</span>
-                            <span>Join Room</span>
+                            <span class="icon">▶</span>
+                            <span>Start Practice</span>
                         </button>
                         <button class="menu-btn" onclick="showLeaderboard()">
-                            <span class="icon">*</span>
+                            <span class="icon">◆</span>
                             <span>Leaderboard</span>
                         </button>
                         <button class="menu-btn" onclick="showStats()">
-                            <span class="icon">@</span>
+                            <span class="icon">≡</span>
                             <span>My Stats</span>
                         </button>
                     </div>
-                    <div style="margin-top: 32px; color: var(--text-muted); font-size: 12px;">
-                        Playing as: <span style="color: var(--accent);">\${state.username}</span>
+                    <div style="margin-top: 24px; color: var(--vscode-descriptionForeground); font-size: 11px;">
+                        Playing as: <span style="color: var(--vscode-textLink-foreground);">\${state.username}</span>
                     </div>
                 </div>
             \`;
@@ -746,23 +546,21 @@ export class CodeTypePanel {
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <div class="menu-container">
-                    <div style="color: var(--text-secondary);">\${message}</div>
+                    <div style="color: var(--vscode-descriptionForeground);">\${message}</div>
                 </div>
             \`;
         }
 
-        function renderEditor(code, showProgressBar = false) {
+        function renderEditor(code) {
             state.code = code;
             state.currentPos = 0;
             state.errors = 0;
             state.startTime = null;
 
-            const lines = code.split('\\n');
             const app = document.getElementById('app');
-
             app.innerHTML = \`
                 <div class="editor-header">
-                    <span class="file-path">src/utils.ts</span>
+                    <span class="file-path">practice.ts</span>
                     <div class="stats-bar">
                         <div class="stat">
                             <span>WPM:</span>
@@ -785,7 +583,6 @@ export class CodeTypePanel {
                         <div id="codeContent"></div>
                     </div>
                 </div>
-                \${showProgressBar ? '<div class="progress-container" id="progressContainer"></div>' : ''}
             \`;
 
             renderCode();
@@ -809,12 +606,11 @@ export class CodeTypePanel {
                     } else if (idx === state.currentPos) {
                         className = 'char current';
                     }
-                    // Escape HTML
                     const displayChar = char === ' ' ? '&nbsp;' :
                                         char === '<' ? '&lt;' :
                                         char === '>' ? '&gt;' :
                                         char === '&' ? '&amp;' :
-                                        char === '\\n' ? '&#8629;' : char;
+                                        char === '\\n' ? '↵' : char;
                     return \`<span class="\${className}" data-idx="\${idx}">\${displayChar}</span>\`;
                 }).join('');
 
@@ -835,28 +631,21 @@ export class CodeTypePanel {
             input.addEventListener('keydown', (e) => {
                 if (state.currentPos >= state.code.length) return;
 
-                // Start timer on first keypress
                 if (!state.startTime) {
                     state.startTime = Date.now();
                 }
 
                 const expectedChar = state.code[state.currentPos];
 
-                // Handle special keys
                 if (e.key === 'Tab') {
                     e.preventDefault();
-                    // Check if we need spaces (tab = 4 spaces usually)
-                    if (expectedChar === ' ') {
-                        handleChar(' ');
-                    }
+                    if (expectedChar === ' ') handleChar(' ');
                     return;
                 }
 
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (expectedChar === '\\n') {
-                        handleChar('\\n');
-                    }
+                    if (expectedChar === '\\n') handleChar('\\n');
                     return;
                 }
 
@@ -870,7 +659,6 @@ export class CodeTypePanel {
                     return;
                 }
 
-                // Regular character
                 if (e.key.length === 1) {
                     e.preventDefault();
                     handleChar(e.key);
@@ -883,49 +671,30 @@ export class CodeTypePanel {
 
             if (char === expectedChar) {
                 state.currentPos++;
-
-                // Update visual
                 const charEl = document.querySelector(\`[data-idx="\${state.currentPos - 1}"]\`);
-                if (charEl) {
-                    charEl.className = 'char correct';
-                }
-
-                // Mark next as current
+                if (charEl) charEl.className = 'char correct';
                 const nextEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
-                if (nextEl) {
-                    nextEl.className = 'char current';
-                }
+                if (nextEl) nextEl.className = 'char current';
             } else {
                 state.errors++;
-                // Flash error
                 const charEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
                 if (charEl) {
                     charEl.className = 'char error';
-                    setTimeout(() => {
-                        charEl.className = 'char current';
-                    }, 150);
+                    setTimeout(() => { charEl.className = 'char current'; }, 150);
                 }
             }
 
             updateStats();
 
-            // Check if finished
             if (state.currentPos >= state.code.length) {
                 finishGame();
-            }
-
-            // Update multiplayer progress
-            if (state.mode === 'multiplayer-playing') {
-                const progress = (state.currentPos / state.code.length) * 100;
-                const wpm = calculateWPM();
-                vscode.postMessage({ type: 'updateProgress', progress, wpm });
             }
         }
 
         function calculateWPM() {
             if (!state.startTime) return 0;
             const minutes = (Date.now() - state.startTime) / 60000;
-            const words = state.currentPos / 5; // Standard: 5 chars = 1 word
+            const words = state.currentPos / 5;
             return Math.round(words / minutes) || 0;
         }
 
@@ -942,20 +711,14 @@ export class CodeTypePanel {
         }
 
         function finishGame() {
-            const endTime = Date.now();
             const result = {
                 wpm: calculateWPM(),
                 accuracy: Math.round((state.currentPos / (state.currentPos + state.errors)) * 100),
-                time: (endTime - state.startTime) / 1000,
+                time: (Date.now() - state.startTime) / 1000,
                 characters: state.code.length,
                 errors: state.errors
             };
-
-            if (state.mode === 'multiplayer-playing') {
-                vscode.postMessage({ type: 'multiplayerFinished', result });
-            } else {
-                vscode.postMessage({ type: 'gameFinished', result });
-            }
+            vscode.postMessage({ type: 'gameFinished', result });
         }
 
         function renderResults(result, stats) {
@@ -979,25 +742,25 @@ export class CodeTypePanel {
                                 <div class="result-stat-label">Errors</div>
                             </div>
                         </div>
-                        <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--bg-tertiary);">
-                            <div style="color: var(--text-secondary); font-size: 12px; margin-bottom: 8px;">Your Stats</div>
-                            <div style="display: flex; gap: 24px; justify-content: center;">
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--vscode-panel-border);">
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 8px;">Your Stats</div>
+                            <div style="display: flex; gap: 20px; justify-content: center;">
                                 <div style="text-align: center;">
-                                    <div style="color: var(--accent);">\${stats.avgWpm}</div>
-                                    <div style="color: var(--text-muted); font-size: 11px;">Avg WPM</div>
+                                    <div style="color: var(--vscode-textLink-foreground);">\${stats.avgWpm}</div>
+                                    <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Avg WPM</div>
                                 </div>
                                 <div style="text-align: center;">
-                                    <div style="color: var(--accent);">\${stats.bestWpm}</div>
-                                    <div style="color: var(--text-muted); font-size: 11px;">Best WPM</div>
+                                    <div style="color: var(--vscode-textLink-foreground);">\${stats.bestWpm}</div>
+                                    <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Best WPM</div>
                                 </div>
                                 <div style="text-align: center;">
-                                    <div style="color: var(--accent);">\${stats.gamesPlayed}</div>
-                                    <div style="color: var(--text-muted); font-size: 11px;">Games</div>
+                                    <div style="color: var(--vscode-textLink-foreground);">\${stats.gamesPlayed}</div>
+                                    <div style="color: var(--vscode-descriptionForeground); font-size: 10px;">Sessions</div>
                                 </div>
                             </div>
                         </div>
-                        <div class="menu-buttons" style="margin-top: 24px; width: auto;">
-                            <button class="menu-btn menu-btn-primary" onclick="startSolo()">Play Again</button>
+                        <div class="menu-buttons" style="margin-top: 20px; width: auto;">
+                            <button class="menu-btn menu-btn-primary" onclick="startSolo()">Practice Again</button>
                             <button class="menu-btn" onclick="goToMenu()">Menu</button>
                         </div>
                     </div>
@@ -1005,71 +768,27 @@ export class CodeTypePanel {
             \`;
         }
 
-        function renderLobby(roomCode, players, isHost) {
-            state.roomCode = roomCode;
-            state.players = players;
-            state.isHost = isHost;
-
+        function renderLeaderboard(data, timeframe) {
+            state.currentTimeframe = timeframe;
             const app = document.getElementById('app');
             app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">< Back</button>
-                <div class="lobby-container">
-                    <div style="color: var(--text-secondary);">Room Code</div>
-                    <div class="room-code" onclick="copyRoomCode()" title="Click to copy">\${roomCode}</div>
-                    <div style="color: var(--text-muted); font-size: 12px;">Click to copy - Share with friends!</div>
-
-                    <div class="players-list">
-                        <div style="color: var(--text-secondary); margin-bottom: 8px;">Players (\${players.length})</div>
-                        \${players.map(p => \`
-                            <div class="player-item">
-                                <span class="player-name">\${p.username} \${p.isHost ? '<span class="player-host">(Host)</span>' : ''}</span>
-                                <span class="player-status">\${p.ready ? 'Ready' : 'Waiting'}</span>
-                            </div>
-                        \`).join('')}
-                    </div>
-
-                    \${isHost ? \`
-                        <button class="menu-btn menu-btn-primary" onclick="startMultiplayer()" \${players.length < 1 ? 'disabled' : ''}>
-                            Start Game
-                        </button>
-                    \` : \`
-                        <div style="color: var(--text-secondary);">Waiting for host to start...</div>
-                    \`}
-                </div>
-            \`;
-        }
-
-        function renderMultiplayerProgress(players) {
-            const container = document.getElementById('progressContainer');
-            if (!container) return;
-
-            container.innerHTML = players.map(p => \`
-                <div class="progress-player">
-                    <span class="progress-name">\${p.username}</span>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: \${p.progress}%"></div>
-                    </div>
-                    <span class="progress-wpm">\${p.wpm} WPM</span>
-                </div>
-            \`).join('');
-        }
-
-        function renderLeaderboard(data, timeframe = 'weekly') {
-            const app = document.getElementById('app');
-            app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">< Back</button>
+                <button class="back-btn" onclick="goToMenu()">← Back</button>
                 <div class="leaderboard-container">
-                    <h2 style="color: var(--accent); margin-bottom: 16px;">Leaderboard</h2>
+                    <h2 class="section-title">Leaderboard</h2>
                     <div class="leaderboard-tabs">
                         <button class="leaderboard-tab \${timeframe === 'daily' ? 'active' : ''}"
                             onclick="loadLeaderboard('daily')">Daily</button>
                         <button class="leaderboard-tab \${timeframe === 'weekly' ? 'active' : ''}"
                             onclick="loadLeaderboard('weekly')">Weekly</button>
+                        <button class="leaderboard-tab \${timeframe === 'monthly' ? 'active' : ''}"
+                            onclick="loadLeaderboard('monthly')">Monthly</button>
+                        <button class="leaderboard-tab \${timeframe === 'yearly' ? 'active' : ''}"
+                            onclick="loadLeaderboard('yearly')">Yearly</button>
                         <button class="leaderboard-tab \${timeframe === 'alltime' ? 'active' : ''}"
                             onclick="loadLeaderboard('alltime')">All Time</button>
                     </div>
                     \${data.length === 0 ? \`
-                        <div style="text-align: center; color: var(--text-secondary); padding: 48px;">
+                        <div style="text-align: center; color: var(--vscode-descriptionForeground); padding: 40px;">
                             No entries yet. Be the first!
                         </div>
                     \` : data.map((entry, i) => \`
@@ -1087,38 +806,37 @@ export class CodeTypePanel {
             const avgWpm = data.gamesPlayed > 0 ? Math.round(data.totalWpm / data.gamesPlayed) : 0;
             const app = document.getElementById('app');
             app.innerHTML = \`
-                <button class="back-btn" onclick="goToMenu()">< Back</button>
+                <button class="back-btn" onclick="goToMenu()">← Back</button>
                 <div class="leaderboard-container">
-                    <h2 style="color: var(--accent); margin-bottom: 24px;">My Stats</h2>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 32px;">
-                        <div style="background: var(--bg-secondary); padding: 24px; text-align: center;">
-                            <div style="font-size: 36px; color: var(--accent);">\${data.gamesPlayed}</div>
-                            <div style="color: var(--text-secondary); font-size: 12px;">Games Played</div>
+                    <h2 class="section-title">My Stats</h2>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${data.gamesPlayed}</div>
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Sessions</div>
                         </div>
-                        <div style="background: var(--bg-secondary); padding: 24px; text-align: center;">
-                            <div style="font-size: 36px; color: var(--accent);">\${avgWpm}</div>
-                            <div style="color: var(--text-secondary); font-size: 12px;">Average WPM</div>
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${avgWpm}</div>
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Avg WPM</div>
                         </div>
-                        <div style="background: var(--bg-secondary); padding: 24px; text-align: center;">
-                            <div style="font-size: 36px; color: var(--accent);">\${data.bestWpm}</div>
-                            <div style="color: var(--text-secondary); font-size: 12px;">Best WPM</div>
+                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: center; border-radius: 4px;">
+                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${data.bestWpm}</div>
+                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Best WPM</div>
                         </div>
                     </div>
-                    <h3 style="color: var(--text-secondary); margin-bottom: 16px;">Recent Games</h3>
+                    <h3 style="color: var(--vscode-descriptionForeground); margin-bottom: 12px; font-size: 13px;">Recent Sessions</h3>
                     \${data.games.slice(-10).reverse().map(g => \`
                         <div class="leaderboard-entry">
-                            <span style="color: var(--text-secondary); font-size: 12px; width: 100px;">
+                            <span style="color: var(--vscode-descriptionForeground); font-size: 11px; width: 90px;">
                                 \${new Date(g.timestamp).toLocaleDateString()}
                             </span>
                             <span style="flex: 1;">\${g.wpm} WPM</span>
-                            <span style="color: var(--text-muted);">\${g.accuracy}% accuracy</span>
+                            <span style="color: var(--vscode-descriptionForeground);">\${g.accuracy}%</span>
                         </div>
-                    \`).join('') || '<div style="color: var(--text-muted);">No games yet</div>'}
+                    \`).join('') || '<div style="color: var(--vscode-descriptionForeground);">No sessions yet</div>'}
                 </div>
             \`;
         }
 
-        // Navigation functions
         function goToMenu() {
             state.mode = 'menu';
             renderMenu();
@@ -1128,22 +846,6 @@ export class CodeTypePanel {
             state.mode = 'solo';
             vscode.postMessage({ type: 'startSolo' });
             renderLoading('Preparing code...');
-        }
-
-        function createRoom() {
-            state.mode = 'create-room';
-            vscode.postMessage({ type: 'createRoom' });
-            renderLoading('Creating room...');
-        }
-
-        function promptJoinRoom() {
-            const code = prompt('Enter room code:');
-            if (code) {
-                state.mode = 'join-room';
-                state.roomCode = code.toUpperCase();
-                vscode.postMessage({ type: 'joinRoom', roomCode: state.roomCode });
-                renderLoading('Joining room...');
-            }
         }
 
         function showLeaderboard() {
@@ -1162,61 +864,23 @@ export class CodeTypePanel {
             renderLoading('Loading stats...');
         }
 
-        function copyRoomCode() {
-            vscode.postMessage({ type: 'copyRoomCode', code: state.roomCode });
-        }
-
-        function startMultiplayer() {
-            vscode.postMessage({ type: 'startMultiplayer' });
-        }
-
-        // Handle messages from extension
         window.addEventListener('message', event => {
             const message = event.data;
 
             switch (message.type) {
                 case 'loadCode':
                     state.mode = 'playing';
-                    renderEditor(message.code, false);
+                    renderEditor(message.code);
                     break;
-
                 case 'showResults':
                     renderResults(message.result, message.stats);
                     break;
-
-                case 'roomCreated':
-                    state.isHost = true;
-                    renderLobby(message.roomCode, [{ username: state.username, isHost: true, ready: true }], true);
-                    break;
-
-                case 'room_playerJoined':
-                case 'room_playerLeft':
-                case 'room_update':
-                    renderLobby(state.roomCode, message.data.players, state.isHost);
-                    break;
-
-                case 'room_gameStart':
-                    state.mode = 'multiplayer-playing';
-                    state.code = message.data.codeSnippet;
-                    renderEditor(message.data.codeSnippet, true);
-                    break;
-
-                case 'room_progress':
-                    renderMultiplayerProgress(message.data.players);
-                    break;
-
-                case 'room_gameEnd':
-                    renderResults(message.data.yourResult, message.data.stats);
-                    break;
-
                 case 'leaderboard':
-                    renderLeaderboard(message.data, 'weekly');
+                    renderLeaderboard(message.data, message.timeframe || state.currentTimeframe);
                     break;
-
                 case 'stats':
                     renderStats(message.data);
                     break;
-
                 case 'error':
                     alert(message.message);
                     goToMenu();
@@ -1224,14 +888,12 @@ export class CodeTypePanel {
             }
         });
 
-        // Initialize
         init();
         `;
     }
 
     public dispose() {
         CodeTypePanel.currentPanel = undefined;
-        this._api.disconnectRoom();
         this._panel.dispose();
         while (this._disposables.length) {
             const x = this._disposables.pop();

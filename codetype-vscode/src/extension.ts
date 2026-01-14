@@ -28,32 +28,6 @@ export function activate(context: vscode.ExtensionContext) {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, 'solo');
         }),
 
-        vscode.commands.registerCommand('codetype.createRoom', async () => {
-            const username = await ensureUsername(context);
-            if (!username) return;
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, 'create-room');
-        }),
-
-        vscode.commands.registerCommand('codetype.joinRoom', async () => {
-            const username = await ensureUsername(context);
-            if (!username) return;
-
-            const roomCode = await vscode.window.showInputBox({
-                prompt: 'Enter room code',
-                placeHolder: 'ABC123',
-                validateInput: (value) => {
-                    if (!value || value.length < 4) {
-                        return 'Please enter a valid room code';
-                    }
-                    return null;
-                }
-            });
-
-            if (roomCode) {
-                CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, 'join-room', roomCode.toUpperCase());
-            }
-        }),
-
         vscode.commands.registerCommand('codetype.leaderboard', () => {
             CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, 'leaderboard');
         }),

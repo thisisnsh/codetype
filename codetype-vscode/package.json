@@ -1,18 +1,18 @@
 {
   "name": "codetype",
   "displayName": "CodeType",
-  "description": "Speed typing competition disguised as normal coding. Play solo or with friends while looking productive.",
+  "description": "Speed typing practice for developers. Improve your coding speed while looking productive.",
   "version": "1.0.0",
   "publisher": "codetype",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/codetype"
+    "url": "https://github.com/thisisnsh/codetype"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/codetype/issues"
+    "url": "https://github.com/thisisnsh/codetype/issues"
   },
-  "homepage": "https://github.com/yourusername/codetype#readme",
+  "homepage": "https://github.com/thisisnsh/codetype#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -21,12 +21,10 @@
   ],
   "keywords": [
     "typing",
-    "game",
     "productivity",
-    "multiplayer",
-    "typing-game",
+    "typing-practice",
     "speed-typing",
-    "competitive",
+    "developer-tools",
     "vibe-coding"
   ],
   "icon": "images/icon.png",
@@ -37,8 +35,6 @@
   "activationEvents": [
     "onCommand:codetype.start",
     "onCommand:codetype.solo",
-    "onCommand:codetype.createRoom",
-    "onCommand:codetype.joinRoom",
     "onCommand:codetype.leaderboard",
     "onCommand:codetype.setUsername",
     "onCommand:codetype.stats"
@@ -53,17 +49,7 @@
       },
       {
         "command": "codetype.solo",
-        "title": "Quick Solo Game",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.createRoom",
-        "title": "Create Multiplayer Room",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.joinRoom",
-        "title": "Join Multiplayer Room",
+        "title": "Quick Practice",
         "category": "CodeType"
       },
       {
@@ -95,20 +81,10 @@
           "default": "",
           "description": "Your unique user ID (auto-generated)"
         },
-        "codetype.theme": {
-          "type": "string",
-          "enum": [
-            "stealth",
-            "minimal",
-            "hacker"
-          ],
-          "default": "stealth",
-          "description": "Visual theme for the typing game"
-        },
         "codetype.soundEnabled": {
           "type": "boolean",
           "default": false,
-          "description": "Enable typing sounds (risky in office!)"
+          "description": "Enable typing sounds"
         },
         "codetype.useWorkspaceCode": {
           "type": "boolean",
