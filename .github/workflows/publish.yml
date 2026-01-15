@@ -39,12 +39,6 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
-      - name: Publish to Open VSX
-        run: npx ovsx publish -p ${{ secrets.OVSX_PAT }}
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
-        continue-on-error: true
-
   deploy-worker:
     runs-on: ubuntu-latest
     needs: publish
