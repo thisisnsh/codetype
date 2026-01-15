@@ -87,7 +87,9 @@ layout: base.njk
     GoogleAuthProvider,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    onAuthStateChanged
+    onAuthStateChanged,
+    setPersistence,
+    inMemoryPersistence
   } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   // Firebase config - will be loaded from API or embedded
@@ -105,6 +107,7 @@ layout: base.njk
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  setPersistence(auth, inMemoryPersistence);
   const googleProvider = new GoogleAuthProvider();
 
   // UI Elements
@@ -250,8 +253,7 @@ layout: base.njk
     if (isFromExtension) {
       // Redirect to VS Code
       successMessage.textContent = 'Redirecting back to VS Code...';
-      const refreshToken = user.refreshToken;
-      window.location.href = `vscode://codetype.codetype/auth-callback?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken)}`;
+      window.location.href = `vscode://codetype.codetype/auth-callback?token=${encodeURIComponent(token)}`;
     } else {
       // Redirect to dashboard
       successMessage.textContent = 'Redirecting to dashboard...';

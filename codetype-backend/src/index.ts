@@ -26,17 +26,104 @@ import {
   isUsernameAvailable,
 } from './firebase';
 
-// Re-export Env for wrangler
 export type { Env };
 
-// CORS headers for all responses
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+const allowedMethods = 'GET, POST, PUT, DELETE, OPTIONS';
+const allowedHeaders = 'Content-Type, Authorization';
 
-// Generate a random room code
+function getAllowedOrigins(env: Env): string[] {
+  if (!env.ALLOWED_ORIGINS) {
+    return ['*'];
+  }
+  return env.ALLOWED_ORIGINS.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+function resolveCorsOrigin(request: Request, env: Env): string | null {
+  const origin = request.headers.get('Origin');
+  if (!origin) {
+    return '*';
+  }
+
+  const allowed = getAllowedOrigins(env);
+  if (allowed.includes('*') || allowed.includes(origin)) {
+    return origin;
+  }
+
+  return null;
+}
+
+function buildCorsHeaders(origin: string | null): HeadersInit {
+  if (!origin) {
+    return {};
+  }
+
+  const headers: Record<string, string> = {
+    'Access-Control-Allow-Origin': origin,
+    'Access-Control-Allow-Methods': allowedMethods,
+    'Access-Control-Allow-Headers': allowedHeaders,
+  };
+
+  if (origin !== '*') {
+    headers['Vary'] = 'Origin';
+  }
+
+  return headers;
+}
+
+function buildSecurityHeaders(): HeadersInit {
+  return {
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+  };
+}
+
+function jsonResponse(
+  request: Request,
+  env: Env,
+  data: any,
+  status = 200
+): Response {
+  const origin = resolveCorsOrigin(request, env);
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    ...buildCorsHeaders(origin),
+    ...buildSecurityHeaders(),
+  });
+
+  return new Response(JSON.stringify(data), { status, headers });
+}
+
+function textResponse(
+  request: Request,
+  env: Env,
+  status: number,
+  message: string
+): Response {
+  const origin = resolveCorsOrigin(request, env);
+  const headers = new Headers({
+    'Content-Type': 'text/plain',
+    ...buildCorsHeaders(origin),
+    ...buildSecurityHeaders(),
+  });
+  return new Response(message, { status, headers });
+}
+
+async function readJson<T>(request: Request): Promise<T | null> {
+  try {
+    return (await request.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function requireJsonContentType(request: Request): boolean {
+  const contentType = request.headers.get('Content-Type') || '';
+  return contentType.includes('application/json');
+}
+
 function generateRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let code = '';
@@ -46,16 +133,19 @@ function generateRoomCode(): string {
   return code;
 }
 
-// Get today's date in YYYY-MM-DD format
 function getTodayDate(): string {
   return new Date().toISOString().split('T')[0];
 }
 
-// Extract and verify auth token from request
-async function getAuthUser(
-  request: Request,
-  env: Env
-): Promise<DecodedToken | null> {
+function normalizeUsername(username: string): string {
+  return username.trim().toLowerCase();
+}
+
+function isValidUsername(username: string): boolean {
+  return /^[a-zA-Z0-9_-]{2,20}$/.test(username);
+}
+
+async function getAuthUser(request: Request, env: Env): Promise<DecodedToken | null> {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
@@ -65,127 +155,160 @@ async function getAuthUser(
   const config = getFirebaseConfig(env);
 
   try {
-    return await verifyIdToken(token, config.projectId);
+    return await verifyIdToken(token, config.projectId, env);
   } catch {
     return null;
   }
 }
 
-// JSON response helper
-function jsonResponse(data: any, status = 200): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders,
-    },
-  });
+async function enforceRateLimit(
+  env: Env,
+  request: Request,
+  bucket: string,
+  limit: number
+): Promise<boolean> {
+  const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+  const windowKey = Math.floor(Date.now() / 60000);
+  const key = `ratelimit:${bucket}:${ip}:${windowKey}`;
+  const currentRaw = await env.CODETYPE_KV.get(key);
+  const current = currentRaw ? parseInt(currentRaw, 10) : 0;
+  if (current >= limit) {
+    return false;
+  }
+  await env.CODETYPE_KV.put(key, String(current + 1), { expirationTtl: 120 });
+  return true;
 }
 
-// Main worker
+function parseRateLimit(env: Env): number {
+  const value = env.RATE_LIMIT_PER_MINUTE;
+  if (!value) {
+    return 120;
+  }
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 120;
+}
+
+function validateGamePayload(body: SubmitGameRequest): string | null {
+  if (!Number.isFinite(body.wpm) || body.wpm < 0 || body.wpm > 400) {
+    return 'Invalid wpm';
+  }
+  if (!Number.isFinite(body.accuracy) || body.accuracy < 0 || body.accuracy > 100) {
+    return 'Invalid accuracy';
+  }
+  if (body.time !== undefined && (!Number.isFinite(body.time) || body.time < 0)) {
+    return 'Invalid time';
+  }
+  if (body.characters !== undefined && (!Number.isFinite(body.characters) || body.characters < 0)) {
+    return 'Invalid characters';
+  }
+  if (body.errors !== undefined && (!Number.isFinite(body.errors) || body.errors < 0)) {
+    return 'Invalid errors';
+  }
+  return null;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // Handle CORS preflight
+    const origin = resolveCorsOrigin(request, env);
     if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders });
+      if (!origin) {
+        return textResponse(request, env, 403, 'Origin not allowed');
+      }
+      return new Response(null, { headers: buildCorsHeaders(origin) });
     }
 
+    if (!origin) {
+      return textResponse(request, env, 403, 'Origin not allowed');
+    }
+
+    const rateLimit = parseRateLimit(env);
     const config = getFirebaseConfig(env);
 
     try {
-      // ==================== AUTH ROUTES ====================
-
-      // Route: POST /auth/verify - Verify Firebase ID token
       if (path === '/auth/verify' && request.method === 'POST') {
-        const body = (await request.json()) as VerifyTokenRequest;
+        if (!requireJsonContentType(request)) {
+          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
+        }
 
-        if (!body.idToken) {
-          return jsonResponse({ error: 'Missing idToken' }, 400);
+        const allowed = await enforceRateLimit(env, request, 'auth-verify', rateLimit);
+        if (!allowed) {
+          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
+        }
+
+        const body = await readJson<VerifyTokenRequest>(request);
+        if (!body?.idToken) {
+          return jsonResponse(request, env, { error: 'Missing idToken' }, 400);
         }
 
         try {
-          const decoded = await verifyIdToken(body.idToken, config.projectId);
+          const decoded = await verifyIdToken(body.idToken, config.projectId, env);
 
-          // Check if user exists in Firestore
-          const user = await firestoreGet<UserDocument>(
-            config.projectId,
-            config.apiKey,
-            'users',
-            decoded.uid
-          );
-
+          const user = await firestoreGet<UserDocument>(env, 'users', decoded.uid);
           const response: VerifyTokenResponse = {
             valid: true,
             user: user || undefined,
             needsUsername: !user?.username,
           };
 
-          return jsonResponse(response);
-        } catch (error: any) {
-          return jsonResponse(
-            { valid: false, error: error.message },
-            401
-          );
+          return jsonResponse(request, env, response);
+        } catch {
+          return jsonResponse(request, env, { valid: false }, 401);
         }
       }
 
-      // Route: POST /auth/register - Create/update user profile
       if (path === '/auth/register' && request.method === 'POST') {
+        if (!requireJsonContentType(request)) {
+          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
+        }
+
+        const allowed = await enforceRateLimit(env, request, 'auth-register', rateLimit);
+        if (!allowed) {
+          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
+        }
+
         const authUser = await getAuthUser(request, env);
         if (!authUser) {
-          return jsonResponse({ error: 'Unauthorized' }, 401);
+          return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
         }
 
-        const body = (await request.json()) as RegisterRequest;
-
-        if (!body.username) {
-          return jsonResponse({ error: 'Missing username' }, 400);
+        const body = await readJson<RegisterRequest>(request);
+        if (!body?.username) {
+          return jsonResponse(request, env, { error: 'Missing username' }, 400);
         }
 
-        // Validate username format
-        const usernameRegex = /^[a-zA-Z0-9_-]{2,20}$/;
-        if (!usernameRegex.test(body.username)) {
+        const normalized = normalizeUsername(body.username);
+        if (!isValidUsername(normalized)) {
           return jsonResponse(
+            request,
+            env,
             { error: 'Invalid username format (2-20 chars, alphanumeric, underscore, hyphen)' },
             400
           );
         }
 
-        // Check if username is available
-        const available = await isUsernameAvailable(
-          config.projectId,
-          config.apiKey,
-          body.username
-        );
+        const available = await isUsernameAvailable(env, normalized);
+        const existingUser = await firestoreGet<UserDocument>(env, 'users', authUser.uid);
 
-        // Get existing user to check if they're updating their own username
-        const existingUser = await firestoreGet<UserDocument>(
-          config.projectId,
-          config.apiKey,
-          'users',
-          authUser.uid
-        );
-
-        if (!available && existingUser?.username !== body.username.toLowerCase()) {
-          return jsonResponse({ error: 'Username already taken' }, 409);
+        if (!available && existingUser?.username !== normalized) {
+          return jsonResponse(request, env, { error: 'Username already taken' }, 409);
         }
 
         const now = Date.now();
         const userData: UserDocument = existingUser
           ? {
               ...existingUser,
-              username: body.username.toLowerCase(),
-              displayName: authUser.name || body.username,
+              username: normalized,
+              displayName: authUser.name || normalized,
               lastLoginAt: now,
             }
           : {
               uid: authUser.uid,
               email: authUser.email,
-              displayName: authUser.name || body.username,
-              username: body.username.toLowerCase(),
+              displayName: authUser.name || normalized,
+              username: normalized,
               photoURL: authUser.picture,
               createdAt: now,
               lastLoginAt: now,
@@ -200,33 +323,25 @@ export default {
               lastPlayedDate: '',
             };
 
-        await firestoreSet(config.projectId, config.apiKey, 'users', authUser.uid, userData);
-
-        return jsonResponse({ success: true, user: userData });
+        await firestoreSet(env, 'users', authUser.uid, userData);
+        return jsonResponse(request, env, { success: true, user: userData });
       }
 
-      // ==================== USER ROUTES ====================
-
-      // Route: GET /users/:uid/stats - Get user statistics
       const statsMatch = path.match(/^\/users\/([^/]+)\/stats$/);
       if (statsMatch && request.method === 'GET') {
         const uid = statsMatch[1];
-
-        const user = await firestoreGet<UserDocument>(
-          config.projectId,
-          config.apiKey,
-          'users',
-          uid
-        );
-
-        if (!user) {
-          return jsonResponse({ error: 'User not found' }, 404);
+        const authUser = await getAuthUser(request, env);
+        if (!authUser || authUser.uid !== uid) {
+          return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
         }
 
-        // Get recent games
+        const user = await firestoreGet<UserDocument>(env, 'users', uid);
+        if (!user) {
+          return jsonResponse(request, env, { error: 'User not found' }, 404);
+        }
+
         const recentGames = await firestoreQuery<GameDocument>(
-          config.projectId,
-          config.apiKey,
+          env,
           'games',
           [{ field: 'userId', op: 'EQUAL', value: uid }],
           { field: 'playedAt', direction: 'DESCENDING' },
@@ -238,30 +353,32 @@ export default {
           recentGames,
         };
 
-        return jsonResponse(response);
+        return jsonResponse(request, env, response);
       }
 
-      // Route: GET /users/:uid/streaks - Get streak data for heatmap
       const streaksMatch = path.match(/^\/users\/([^/]+)\/streaks$/);
       if (streaksMatch && request.method === 'GET') {
         const uid = streaksMatch[1];
-        const year = parseInt(url.searchParams.get('year') || new Date().getFullYear().toString(), 10);
-
-        const user = await firestoreGet<UserDocument>(
-          config.projectId,
-          config.apiKey,
-          'users',
-          uid
-        );
-
-        if (!user) {
-          return jsonResponse({ error: 'User not found' }, 404);
+        const authUser = await getAuthUser(request, env);
+        if (!authUser || authUser.uid !== uid) {
+          return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
         }
 
-        const activities = await getYearActivity(config.projectId, config.apiKey, uid, year);
+        const year = parseInt(
+          url.searchParams.get('year') || new Date().getFullYear().toString(),
+          10
+        );
 
-        // Transform activities for response
-        const activitiesMap: Record<string, { gamesPlayed: number; totalWpm: number; bestWpm: number }> = {};
+        const user = await firestoreGet<UserDocument>(env, 'users', uid);
+        if (!user) {
+          return jsonResponse(request, env, { error: 'User not found' }, 404);
+        }
+
+        const activities = await getYearActivity(env, uid, year);
+        const activitiesMap: Record<
+          string,
+          { gamesPlayed: number; totalWpm: number; bestWpm: number }
+        > = {};
         for (const [date, activity] of Object.entries(activities)) {
           activitiesMap[date] = {
             gamesPlayed: activity.gamesPlayed,
@@ -277,40 +394,40 @@ export default {
           totalActiveDays: Object.keys(activities).length,
         };
 
-        return jsonResponse(response);
+        return jsonResponse(request, env, response);
       }
 
-      // ==================== GAME ROUTES ====================
-
-      // Route: POST /games - Submit game result (authenticated)
       if (path === '/games' && request.method === 'POST') {
+        if (!requireJsonContentType(request)) {
+          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
+        }
+
+        const allowed = await enforceRateLimit(env, request, 'games', rateLimit);
+        if (!allowed) {
+          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
+        }
+
         const authUser = await getAuthUser(request, env);
         if (!authUser) {
-          return jsonResponse({ error: 'Unauthorized' }, 401);
+          return jsonResponse(request, env, { error: 'Unauthorized' }, 401);
         }
 
-        const body = (await request.json()) as SubmitGameRequest;
-
-        if (body.wpm === undefined || body.accuracy === undefined) {
-          return jsonResponse({ error: 'Missing required fields' }, 400);
+        const body = await readJson<SubmitGameRequest>(request);
+        if (!body) {
+          return jsonResponse(request, env, { error: 'Invalid JSON body' }, 400);
         }
 
-        const config = getFirebaseConfig(env);
+        const validationError = validateGamePayload(body);
+        if (validationError) {
+          return jsonResponse(request, env, { error: validationError }, 400);
+        }
+
         const today = getTodayDate();
-
-        // Get user
-        const user = await firestoreGet<UserDocument>(
-          config.projectId,
-          config.apiKey,
-          'users',
-          authUser.uid
-        );
-
+        const user = await firestoreGet<UserDocument>(env, 'users', authUser.uid);
         if (!user) {
-          return jsonResponse({ error: 'User not registered' }, 400);
+          return jsonResponse(request, env, { error: 'User not registered' }, 400);
         }
 
-        // Create game document
         const gameData: Omit<GameDocument, 'id'> = {
           userId: authUser.uid,
           wpm: body.wpm,
@@ -323,15 +440,14 @@ export default {
           date: today,
         };
 
-        const gameId = await firestoreAdd(config.projectId, config.apiKey, 'games', gameData);
+        const gameId = await firestoreAdd(env, 'games', gameData);
 
-        // Update user stats
         const newTotalGames = user.totalGamesPlayed + 1;
         const newTotalWpm = user.totalWpm + body.wpm;
         const newBestWpm = Math.max(user.bestWpm, body.wpm);
         const newAvgWpm = Math.round(newTotalWpm / newTotalGames);
 
-        await firestoreSet(config.projectId, config.apiKey, 'users', authUser.uid, {
+        await firestoreSet(env, 'users', authUser.uid, {
           ...user,
           totalGamesPlayed: newTotalGames,
           totalWpm: newTotalWpm,
@@ -341,18 +457,9 @@ export default {
           totalErrors: user.totalErrors + (body.errors || 0),
         });
 
-        // Update streak
-        const { currentStreak } = await updateStreak(
-          config.projectId,
-          config.apiKey,
-          authUser.uid,
-          today
-        );
+        const { currentStreak } = await updateStreak(env, authUser.uid, today);
+        await updateActivity(env, authUser.uid, today, body.wpm);
 
-        // Update activity for heatmap
-        await updateActivity(config.projectId, config.apiKey, authUser.uid, today, body.wpm);
-
-        // Also update KV-based leaderboard for backwards compatibility
         await updateLeaderboards(env, authUser.uid, user.username, body.wpm, user.photoURL);
 
         const response: SubmitGameResponse = {
@@ -366,21 +473,33 @@ export default {
           },
         };
 
-        return jsonResponse(response);
+        return jsonResponse(request, env, response);
       }
 
-      // ==================== LEGACY ROUTES (anonymous support) ====================
-
-      // Route: POST /scores - Submit a game score (anonymous)
       if (path === '/scores' && request.method === 'POST') {
-        const body = (await request.json()) as any;
-        const { userId, username, wpm, accuracy, time, characters, errors } = body;
-
-        if (!userId || !username || wpm === undefined) {
-          return jsonResponse({ error: 'Missing required fields' }, 400);
+        if (env.ALLOW_ANON_SCORES !== 'true') {
+          return jsonResponse(request, env, { error: 'Not found' }, 404);
         }
 
-        // Store the score in KV
+        if (!requireJsonContentType(request)) {
+          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
+        }
+
+        const allowed = await enforceRateLimit(env, request, 'scores', rateLimit);
+        if (!allowed) {
+          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
+        }
+
+        const body = await readJson<any>(request);
+        if (!body) {
+          return jsonResponse(request, env, { error: 'Invalid JSON body' }, 400);
+        }
+
+        const { userId, username, wpm, accuracy, time, characters, errors } = body;
+        if (!userId || !username || wpm === undefined) {
+          return jsonResponse(request, env, { error: 'Missing required fields' }, 400);
+        }
+
         const scoreKey = `score:${userId}:${Date.now()}`;
         await env.CODETYPE_KV.put(
           scoreKey,
@@ -397,7 +516,6 @@ export default {
           { expirationTtl: 60 * 60 * 24 * 90 }
         );
 
-        // Update user stats in KV
         const userStatsKey = `user:${userId}`;
         const existingStats = await env.CODETYPE_KV.get(userStatsKey);
         const stats = existingStats
@@ -416,29 +534,32 @@ export default {
         stats.lastPlayed = Date.now();
 
         await env.CODETYPE_KV.put(userStatsKey, JSON.stringify(stats));
-
-        // Update leaderboard entries
         await updateLeaderboards(env, userId, username, wpm);
 
-        return jsonResponse({ success: true });
+        return jsonResponse(request, env, { success: true });
       }
 
-      // Route: GET /leaderboard - Get leaderboard
       if (path === '/leaderboard' && request.method === 'GET') {
         const timeframe = url.searchParams.get('timeframe') || 'weekly';
         const leaderboard = await getLeaderboard(env, timeframe);
-        return jsonResponse(leaderboard);
+        return jsonResponse(request, env, leaderboard);
       }
 
-      // ==================== ROOM ROUTES (multiplayer - kept for future) ====================
-
-      // Route: POST /rooms - Create a new room
       if (path === '/rooms' && request.method === 'POST') {
-        const body = (await request.json()) as any;
-        const { hostId, hostUsername } = body;
+        if (!requireJsonContentType(request)) {
+          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
+        }
+
+        const allowed = await enforceRateLimit(env, request, 'rooms', rateLimit);
+        if (!allowed) {
+          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
+        }
+
+        const body = await readJson<any>(request);
+        const { hostId, hostUsername } = body || {};
 
         if (!hostId || !hostUsername) {
-          return jsonResponse({ error: 'Missing host info' }, 400);
+          return jsonResponse(request, env, { error: 'Missing host info' }, 400);
         }
 
         let roomCode = generateRoomCode();
@@ -459,10 +580,9 @@ export default {
           { expirationTtl: 60 * 60 * 2 }
         );
 
-        return jsonResponse({ code: roomCode });
+        return jsonResponse(request, env, { code: roomCode });
       }
 
-      // Route: WebSocket /rooms/:code/ws - Join room via WebSocket
       const roomMatch = path.match(/^\/rooms\/([A-Z0-9]+)\/ws$/);
       if (roomMatch) {
         const roomCode = roomMatch[1];
@@ -470,7 +590,7 @@ export default {
         const username = url.searchParams.get('username');
 
         if (!userId || !username) {
-          return jsonResponse({ error: 'Missing user info' }, 400);
+          return jsonResponse(request, env, { error: 'Missing user info' }, 400);
         }
 
         const id = env.ROOMS.idFromName(roomCode);
@@ -483,16 +603,12 @@ export default {
         return room.fetch(newRequest);
       }
 
-      // 404 for unknown routes
-      return jsonResponse({ error: 'Not found' }, 404);
-    } catch (error: any) {
-      console.error('Worker error:', error);
-      return jsonResponse({ error: 'Internal server error', details: error.message }, 500);
+      return jsonResponse(request, env, { error: 'Not found' }, 404);
+    } catch {
+      return jsonResponse(request, env, { error: 'Internal server error' }, 500);
     }
   },
 };
-
-// ==================== LEADERBOARD HELPERS ====================
 
 async function updateLeaderboards(
   env: Env,
@@ -504,7 +620,6 @@ async function updateLeaderboards(
   const today = new Date().toISOString().split('T')[0];
   const weekStart = getWeekStart();
 
-  // Daily leaderboard
   await updateLeaderboardEntry(
     env,
     `leaderboard:daily:${today}`,
@@ -515,7 +630,6 @@ async function updateLeaderboards(
     60 * 60 * 48
   );
 
-  // Weekly leaderboard
   await updateLeaderboardEntry(
     env,
     `leaderboard:weekly:${weekStart}`,
@@ -526,7 +640,6 @@ async function updateLeaderboards(
     60 * 60 * 24 * 8
   );
 
-  // All-time leaderboard
   await updateLeaderboardEntry(env, 'leaderboard:alltime', userId, username, wpm, photoURL);
 }
 
@@ -604,9 +717,6 @@ function getWeekStart(): string {
   return monday.toISOString().split('T')[0];
 }
 
-// ==================== DURABLE OBJECT ====================
-
-// Durable Object for managing game rooms
 export class GameRoom {
   private state: DurableObjectState;
   private sessions: Map<WebSocket, { userId: string; username: string }> = new Map();
@@ -620,10 +730,10 @@ export class GameRoom {
       finishTime?: number;
     }
   > = new Map();
-  private hostId: string = '';
+  private hostId = '';
   private gameStatus: 'waiting' | 'countdown' | 'playing' | 'finished' = 'waiting';
-  private codeSnippet: string = '';
-  private gameStartTime: number = 0;
+  private codeSnippet = '';
+  private gameStartTime = 0;
 
   constructor(state: DurableObjectState) {
     this.state = state;
@@ -683,8 +793,8 @@ export class GameRoom {
       try {
         const message = JSON.parse(event.data as string);
         await this.handleMessage(ws, userId, message);
-      } catch (e) {
-        console.error('Message handling error:', e);
+      } catch {
+        // Ignore malformed events
       }
     });
 
@@ -811,11 +921,11 @@ export class GameRoom {
 
   private broadcast(type: string, data: any) {
     const message = JSON.stringify({ type, data });
-    for (const ws of this.sessions.keys()) {
+    for (const socket of this.sessions.keys()) {
       try {
-        ws.send(message);
-      } catch (e) {
-        // Connection might be closed
+        socket.send(message);
+      } catch {
+        // Ignore closed sockets
       }
     }
   }

@@ -57,7 +57,9 @@ This monorepo contains:
 codetype/
 ├── codetype-vscode/      # VS Code extension
 │   ├── src/              # Extension source code
-│   ├── worker/           # Cloudflare Worker backend
+│   └── package.json
+├── codetype-backend/     # Cloudflare Worker backend
+│   ├── src/              # Worker source code
 │   └── package.json
 ├── codetype-website/     # Promotional website
 │   ├── src/              # Eleventy source files

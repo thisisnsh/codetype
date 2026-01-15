@@ -56,7 +56,7 @@ layout: base.njk
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, setPersistence, inMemoryPersistence } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const firebaseConfig = window.FIREBASE_CONFIG || {
     apiKey: "",
@@ -68,6 +68,7 @@ layout: base.njk
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  setPersistence(auth, inMemoryPersistence);
 
   const loadingEl = document.getElementById('leaderboard-loading');
   const contentEl = document.getElementById('leaderboard-content');

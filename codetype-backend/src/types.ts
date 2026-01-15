@@ -112,6 +112,8 @@ export interface LeaderboardEntry {
 export interface FirebaseConfig {
   projectId: string;
   apiKey: string;
+  authDomain?: string;
+  appId?: string;
   serviceAccount?: {
     client_email: string;
     private_key: string;
@@ -125,4 +127,8 @@ export interface Env {
   FIREBASE_PROJECT_ID: string;
   FIREBASE_API_KEY: string;
   FIREBASE_CONFIG: string; // JSON string of FirebaseConfig
+  FIREBASE_JWT_CERTS?: string; // JSON map of key id to PEM
+  ALLOWED_ORIGINS?: string; // Comma-separated allowlist for CORS
+  RATE_LIMIT_PER_MINUTE?: string;
+  ALLOW_ANON_SCORES?: string;
 }
