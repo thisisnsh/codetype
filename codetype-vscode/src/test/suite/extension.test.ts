@@ -5,11 +5,11 @@ suite('Extension Test Suite', () => {
     vscode.window.showInformationMessage('Starting CodeType tests...');
 
     test('Extension should be present', () => {
-        assert.ok(vscode.extensions.getExtension('codetype.codetype'));
+        assert.ok(vscode.extensions.getExtension('thisisnsh.codetype'));
     });
 
     test('Extension should activate', async () => {
-        const extension = vscode.extensions.getExtension('codetype.codetype');
+        const extension = vscode.extensions.getExtension('thisisnsh.codetype');
         assert.ok(extension);
         await extension!.activate();
         assert.strictEqual(extension!.isActive, true);
