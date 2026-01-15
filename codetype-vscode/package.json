@@ -53,6 +53,16 @@
           "default": "",
           "description": "Your unique user ID (auto-generated)"
         },
+        "codetype.theme": {
+          "type": "string",
+          "default": "stealth",
+          "enum": [
+            "stealth",
+            "minimal",
+            "hacker"
+          ],
+          "description": "Theme for the CodeType panel"
+        },
         "codetype.soundEnabled": {
           "type": "boolean",
           "default": false,
