@@ -447,20 +447,19 @@ export class CodeTypePanel {
         .welcome-shell {
             flex: 1;
             display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 32px 0;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 32px 40px 48px;
             overflow-y: auto;
         }
 
         .welcome-container {
-            padding: 28px 32px;
-            width: 640px;
-            max-width: calc(100% - 80px);
-            overflow-y: auto;
+            width: 720px;
+            max-width: 100%;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
         }
 
         .welcome-header {
@@ -470,21 +469,21 @@ export class CodeTypePanel {
         }
 
         .welcome-title {
-            font-size: 24px;
+            font-size: 30px;
+            font-weight: 400;
             color: var(--vscode-foreground);
         }
 
         .welcome-subtitle {
             color: var(--vscode-descriptionForeground);
-            font-size: 13px;
+            font-size: 16px;
         }
 
         .welcome-grid {
             display: grid;
-            grid-template-columns: 280px 240px;
-            gap: 32px;
+            grid-template-columns: 320px 260px;
+            gap: 40px;
             align-items: start;
-            justify-content: start;
         }
 
         .welcome-column {
@@ -501,7 +500,7 @@ export class CodeTypePanel {
         }
 
         .welcome-section-title {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: 600;
             color: var(--vscode-foreground);
         }
@@ -524,6 +523,7 @@ export class CodeTypePanel {
             align-items: center;
             gap: 8px;
             padding: 2px 0;
+            line-height: 1.4;
         }
 
         .start-link:hover {
@@ -562,9 +562,24 @@ export class CodeTypePanel {
         }
 
         .stats-note {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
             margin-top: 4px;
+        }
+
+        .link-button {
+            background: none;
+            border: none;
+            color: var(--vscode-textLink-foreground);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            padding: 0;
+            margin-left: 4px;
+        }
+
+        .link-button:hover {
+            text-decoration: underline;
         }
 
         .recent-list {
@@ -576,7 +591,7 @@ export class CodeTypePanel {
         .recent-item {
             display: flex;
             gap: 12px;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .recent-date {
@@ -600,11 +615,12 @@ export class CodeTypePanel {
 
         .welcome-footer {
             display: flex;
-            gap: 16px;
+            align-items: center;
+            gap: 8px;
             flex-wrap: wrap;
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 24px;
+            margin-top: 20px;
         }
 
         .welcome-footer a {
@@ -616,9 +632,13 @@ export class CodeTypePanel {
             text-decoration: underline;
         }
 
+        .footer-separator {
+            opacity: 0.6;
+        }
+
         @media (max-width: 700px) {
             .welcome-shell {
-                align-items: flex-start;
+                padding: 24px 24px 40px;
             }
 
             .welcome-grid {
@@ -1075,7 +1095,9 @@ export class CodeTypePanel {
                     }).join('')
                     : '<div class="recent-empty">No recent sessions yet</div>')
                 : '<div class="recent-empty">Loading recent sessions...</div>';
-            const streakNote = isAuthenticated ? '' : '<div class="stats-note">Sign in to access streaks.</div>';
+            const streakNote = isAuthenticated
+                ? ''
+                : '<div class="stats-note">Sign in or sign up to access streaks.<button class="link-button" onclick="login()">Sign in / Sign up</button></div>';
 
             app.innerHTML = \`
                 <div class="welcome-shell">
@@ -1118,7 +1140,9 @@ export class CodeTypePanel {
                         </div>
                         <div class="welcome-footer">
                             <span>created by nishant hada</span>
+                            <span class="footer-separator">•</span>
                             <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">mit license</a>
+                            <span class="footer-separator">•</span>
                             <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">star on github</a>
                         </div>
                     </div>
