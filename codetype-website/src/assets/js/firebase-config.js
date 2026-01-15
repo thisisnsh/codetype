@@ -12,4 +12,4 @@ window.FIREBASE_CONFIG = {
 };
 
 // API Base URL - update this to your Cloudflare Worker URL
-window.API_BASE = "https://codetype-api.your-subdomain.workers.dev";
+window.API_BASE = "https://codetype-api.thisisnsh.workers.dev";
