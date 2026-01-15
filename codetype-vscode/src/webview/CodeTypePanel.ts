@@ -248,8 +248,8 @@ export class CodeTypePanel {
         }
 
         body {
-            font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Fira Code', Consolas, monospace);
-            font-size: var(--vscode-editor-font-size, 14px);
+            font-family: var(--vscode-font-family, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif);
+            font-size: var(--vscode-font-size, 13px);
             background: var(--vscode-editor-background);
             color: var(--vscode-editor-foreground);
             height: 100vh;
@@ -302,6 +302,8 @@ export class CodeTypePanel {
             flex: 1;
             display: flex;
             overflow: hidden;
+            font-family: var(--vscode-editor-font-family, 'Cascadia Code', 'Fira Code', Consolas, monospace);
+            font-size: var(--vscode-editor-font-size, 14px);
         }
 
         .line-numbers {
@@ -442,9 +444,19 @@ export class CodeTypePanel {
         }
 
         /* Welcome screen */
+        .welcome-shell {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 32px 0;
+            overflow-y: auto;
+        }
+
         .welcome-container {
-            padding: 32px 40px;
-            height: 100%;
+            padding: 28px 32px;
+            width: 640px;
+            max-width: calc(100% - 80px);
             overflow-y: auto;
             display: flex;
             flex-direction: column;
@@ -458,7 +470,7 @@ export class CodeTypePanel {
         }
 
         .welcome-title {
-            font-size: 30px;
+            font-size: 24px;
             color: var(--vscode-foreground);
         }
 
@@ -469,9 +481,10 @@ export class CodeTypePanel {
 
         .welcome-grid {
             display: grid;
-            grid-template-columns: minmax(240px, 1fr) minmax(240px, 0.9fr);
-            gap: 40px;
+            grid-template-columns: 280px 240px;
+            gap: 32px;
             align-items: start;
+            justify-content: start;
         }
 
         .welcome-column {
@@ -604,6 +617,10 @@ export class CodeTypePanel {
         }
 
         @media (max-width: 700px) {
+            .welcome-shell {
+                align-items: flex-start;
+            }
+
             .welcome-grid {
                 grid-template-columns: 1fr;
                 gap: 24px;
@@ -1061,47 +1078,49 @@ export class CodeTypePanel {
             const streakNote = isAuthenticated ? '' : '<div class="stats-note">Sign in to access streaks.</div>';
 
             app.innerHTML = \`
-                <div class="welcome-container">
-                    <div class="welcome-header">
-                        <div class="welcome-title">CodeType</div>
-                        <div class="welcome-subtitle">Typing Game for Developers</div>
-                    </div>
-                    <div class="welcome-grid">
-                        <div class="welcome-column">
-                            <div class="welcome-section">
-                                <div class="welcome-section-title">Start</div>
-                                <div class="start-links">
-                                    <button class="start-link" onclick="startSolo()">
-                                        <span class="start-icon">\${soloIcon}</span>
-                                        Solo Game
-                                    </button>
-                                    <button class="start-link" onclick="showMultiplayerOptions()">
-                                        <span class="start-icon">\${teamIcon}</span>
-                                        Team Game
-                                    </button>
+                <div class="welcome-shell">
+                    <div class="welcome-container">
+                        <div class="welcome-header">
+                            <div class="welcome-title">CodeType</div>
+                            <div class="welcome-subtitle">Typing Game for Developers</div>
+                        </div>
+                        <div class="welcome-grid">
+                            <div class="welcome-column">
+                                <div class="welcome-section">
+                                    <div class="welcome-section-title">Start</div>
+                                    <div class="start-links">
+                                        <button class="start-link" onclick="startSolo()">
+                                            <span class="start-icon">\${soloIcon}</span>
+                                            Solo Game
+                                        </button>
+                                        <button class="start-link" onclick="showMultiplayerOptions()">
+                                            <span class="start-icon">\${teamIcon}</span>
+                                            Team Game
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="welcome-section">
+                                    <div class="welcome-section-title">Recent</div>
+                                    <div class="recent-list">
+                                        \${recentHtml}
+                                    </div>
                                 </div>
                             </div>
-                            <div class="welcome-section">
-                                <div class="welcome-section-title">Recent</div>
-                                <div class="recent-list">
-                                    \${recentHtml}
+                            <div class="welcome-column">
+                                <div class="welcome-section">
+                                    <div class="welcome-section-title">Stats</div>
+                                    <div class="stats-list">
+                                        \${statsHtml}
+                                    </div>
+                                    \${streakNote}
                                 </div>
                             </div>
                         </div>
-                        <div class="welcome-column">
-                            <div class="welcome-section">
-                                <div class="welcome-section-title">Stats</div>
-                                <div class="stats-list">
-                                    \${statsHtml}
-                                </div>
-                                \${streakNote}
-                            </div>
+                        <div class="welcome-footer">
+                            <span>created by nishant hada</span>
+                            <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">mit license</a>
+                            <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">star on github</a>
                         </div>
-                    </div>
-                    <div class="welcome-footer">
-                        <span>created by nishant hada</span>
-                        <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">mit license</a>
-                        <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">star on github</a>
                     </div>
                 </div>
             \`;
