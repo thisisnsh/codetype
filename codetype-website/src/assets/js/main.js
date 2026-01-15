@@ -313,11 +313,15 @@ class FAQ {
 
 // Smooth scroll for anchor links
 function initSmoothScroll() {
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+  document.querySelectorAll('a[href*="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute('href'));
+      const url = new URL(this.getAttribute('href'), window.location.href);
+      if (url.pathname !== window.location.pathname || url.hash.length < 2) {
+        return;
+      }
+      const target = document.querySelector(url.hash);
       if (target) {
+        e.preventDefault();
         target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     });
@@ -328,23 +332,32 @@ function initSmoothScroll() {
 function initActivityBar() {
   const icons = document.querySelectorAll('.activity-icon');
   const sections = ['hero', 'features', 'download', 'faq'];
+  const scrollContainer = document.querySelector('.editor-content');
 
-  window.addEventListener('scroll', () => {
-    const scrollPos = window.scrollY + 200;
+  if (!scrollContainer || icons.length === 0) {
+    return;
+  }
+
+  const updateActive = () => {
+    const scrollPos = scrollContainer.scrollTop + 200;
 
     sections.forEach((section, index) => {
       const element = document.getElementById(section);
-      if (element) {
-        const top = element.offsetTop;
-        const bottom = top + element.offsetHeight;
+      if (!element) {
+        return;
+      }
+      const top = element.offsetTop;
+      const bottom = top + element.offsetHeight;
 
-        if (scrollPos >= top && scrollPos < bottom) {
-          icons.forEach(icon => icon.classList.remove('active'));
-          icons[index]?.classList.add('active');
-        }
+      if (scrollPos >= top && scrollPos < bottom) {
+        icons.forEach(icon => icon.classList.remove('active'));
+        icons[index]?.classList.add('active');
       }
     });
-  });
+  };
+
+  scrollContainer.addEventListener('scroll', updateActive);
+  updateActive();
 }
 
 // Animate elements on scroll
@@ -362,6 +375,39 @@ function initScrollAnimations() {
   });
 }
 
+// Mobile sidebar toggle
+function initSidebarToggle() {
+  const toggle = document.querySelector('.sidebar-toggle');
+  const overlay = document.querySelector('.sidebar-overlay');
+  const shell = document.querySelector('.vscode-window');
+  const sidebarLinks = document.querySelectorAll('#sidebar a');
+
+  if (!toggle || !overlay || !shell) {
+    return;
+  }
+
+  const setOpen = (isOpen) => {
+    shell.classList.toggle('sidebar-open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+  };
+
+  toggle.addEventListener('click', () => {
+    setOpen(!shell.classList.contains('sidebar-open'));
+  });
+
+  overlay.addEventListener('click', () => setOpen(false));
+
+  sidebarLinks.forEach(link => {
+    link.addEventListener('click', () => setOpen(false));
+  });
+
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      setOpen(false);
+    }
+  });
+}
+
 // Initialize everything
 document.addEventListener('DOMContentLoaded', () => {
   new TypingDemo();
@@ -369,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initSmoothScroll();
   initActivityBar();
   initScrollAnimations();
+  initSidebarToggle();
 });
 
 // Click outside to deactivate typing demo
