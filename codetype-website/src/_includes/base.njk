@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   {% set siteUrl = 'https://codetype.ai' %}
-  {% set metaTitle = title ? title + ' | CodeType' : 'CodeType | Typing Game for Developers' %}
+  {% set metaTitle = 'CodeType | Typing Game for Developers' %}
+  {% if title %}
+    {% set metaTitle = title ~ ' | CodeType' %}
+  {% endif %}
   {% set metaDescription = description or 'CodeType is a VS Code typing game for developers. Practice real code, track WPM, and climb leaderboards.' %}
   {% set canonicalUrl = siteUrl ~ page.url %}
   <meta charset="UTF-8">
