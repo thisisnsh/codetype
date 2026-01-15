@@ -159,11 +159,12 @@ export class CodeTypePanel {
                 break;
 
             case 'login':
-                vscode.commands.executeCommand('codetype.login');
+                await this._authService.login();
                 break;
 
             case 'logout':
-                vscode.commands.executeCommand('codetype.logout');
+                await this._authService.logout();
+                CodeTypePanel.refreshAll();
                 break;
 
             case 'navigate':
@@ -438,6 +439,175 @@ export class CodeTypePanel {
 
         .menu-btn-primary:hover {
             background: var(--vscode-button-hoverBackground);
+        }
+
+        /* Welcome screen */
+        .welcome-container {
+            padding: 32px 40px;
+            height: 100%;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .welcome-header {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .welcome-title {
+            font-size: 30px;
+            color: var(--vscode-foreground);
+        }
+
+        .welcome-subtitle {
+            color: var(--vscode-descriptionForeground);
+            font-size: 13px;
+        }
+
+        .welcome-grid {
+            display: grid;
+            grid-template-columns: minmax(240px, 1fr) minmax(240px, 0.9fr);
+            gap: 40px;
+            align-items: start;
+        }
+
+        .welcome-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            min-width: 0;
+        }
+
+        .welcome-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .welcome-section-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
+        }
+
+        .start-links {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .start-link {
+            background: none;
+            border: none;
+            color: var(--vscode-textLink-foreground);
+            font-family: inherit;
+            font-size: 13px;
+            cursor: pointer;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 2px 0;
+        }
+
+        .start-link:hover {
+            text-decoration: underline;
+        }
+
+        .start-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .stats-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stats-item {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 13px;
+        }
+
+        .stats-label {
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .stats-value {
+            color: var(--vscode-foreground);
+            font-weight: 600;
+        }
+
+        .stats-note {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+        }
+
+        .recent-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .recent-item {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .recent-date {
+            width: 90px;
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .recent-wpm {
+            color: var(--vscode-textLink-foreground);
+            min-width: 70px;
+        }
+
+        .recent-accuracy {
+            color: var(--vscode-descriptionForeground);
+        }
+
+        .recent-empty {
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+        }
+
+        .welcome-footer {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 24px;
+        }
+
+        .welcome-footer a {
+            color: var(--vscode-textLink-foreground);
+            text-decoration: none;
+        }
+
+        .welcome-footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 700px) {
+            .welcome-grid {
+                grid-template-columns: 1fr;
+                gap: 24px;
+            }
         }
 
         /* Results overlay */
@@ -810,6 +980,7 @@ export class CodeTypePanel {
             isAuthenticated: ${isAuthenticated},
             user: ${userJson},
             streakData: null,
+            stats: null,
             // Multiplayer state
             roomCode: null,
             wsConnection: null,
@@ -824,7 +995,10 @@ export class CodeTypePanel {
         function init() {
             switch(state.mode) {
                 case 'menu':
-                    renderMenu();
+                    showWelcome();
+                    break;
+                case 'stats':
+                    showWelcome();
                     break;
                 case 'solo':
                     vscode.postMessage({ type: 'startSolo' });
@@ -840,38 +1014,94 @@ export class CodeTypePanel {
             }
         }
 
-        function renderMenu() {
+        function renderWelcome(data, isAuthenticated, user) {
             const app = document.getElementById('app');
-            const userDisplay = state.isAuthenticated && state.user
-                ? \`<div style="display: flex; align-items: center; gap: 10px;">
-                    \${state.user.photoURL ? \`<img src="\${state.user.photoURL}" style="width: 32px; height: 32px; border-radius: 50%;" />\` : ''}
-                    <div>
-                        <div style="color: var(--vscode-textLink-foreground);">\${state.user.username || state.user.displayName}</div>
-                        <div style="font-size: 10px; color: var(--vscode-descriptionForeground);">\${state.user.currentStreak || 0} day streak</div>
-                    </div>
-                </div>\`
-                : \`<div style="color: var(--vscode-descriptionForeground); font-size: 11px;">
-                    Play without signing in.<br/>
-                    <span style="opacity: 0.7;">Sign in to save streaks across devices.</span>
-                </div>\`;
+            const hasData = Boolean(data);
+            const stats = data || {};
+            const avgWpm = stats.avgWpm || (stats.totalGamesPlayed > 0 ? Math.round(stats.totalWpm / stats.totalGamesPlayed) : 0);
+            const gamesPlayed = stats.totalGamesPlayed || stats.gamesPlayed || 0;
+            const bestWpm = stats.bestWpm || 0;
+            const currentStreak = stats.currentStreak || 0;
+            const games = stats.games || [];
 
-            const authButton = state.isAuthenticated
-                ? \`<button class="menu-btn" onclick="logout()">Sign Out</button>\`
-                : \`<button class="menu-btn" onclick="login()">Sign In</button>\`;
+            const soloIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="2.7"></circle><path d="M3.5 13.2c.8-2.3 2.6-3.4 4.5-3.4s3.7 1.1 4.5 3.4"></path></svg>';
+            const teamIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="5.2" r="2.3"></circle><circle cx="11.2" cy="6" r="1.9"></circle><path d="M1.8 13.2c.6-2 2.1-3 3.9-3"></path><path d="M8.4 13.2c.6-1.7 1.9-2.6 3.4-2.6"></path></svg>';
+            const displayValue = (value) => (hasData ? value : '--');
+            const streakLabel = isAuthenticated ? 'Day Streak' : 'Day Streak*';
+            const streakValue = isAuthenticated ? currentStreak : '--';
+            const statsRows = [
+                { label: 'Sessions', value: displayValue(gamesPlayed) },
+                { label: 'Avg WPM', value: displayValue(avgWpm) },
+                { label: 'Best WPM', value: displayValue(bestWpm) },
+                { label: streakLabel, value: displayValue(streakValue) }
+            ];
+            const statsHtml = statsRows.map((row) => \`
+                <div class="stats-item">
+                    <span class="stats-label">\${row.label}</span>
+                    <span class="stats-value">\${row.value}</span>
+                </div>
+            \`).join('');
+            const recentHtml = hasData
+                ? (games.length
+                    ? games.slice(-5).reverse().map((game) => {
+                        const dateValue = game.playedAt || game.timestamp;
+                        const dateLabel = dateValue ? new Date(dateValue).toLocaleDateString() : '--';
+                        const wpmValue = typeof game.wpm === 'number' ? game.wpm + ' WPM' : '--';
+                        const accuracyValue = typeof game.accuracy === 'number' ? game.accuracy + '%' : '--';
+                        return \`
+                            <div class="recent-item">
+                                <span class="recent-date">\${dateLabel}</span>
+                                <span class="recent-wpm">\${wpmValue}</span>
+                                <span class="recent-accuracy">\${accuracyValue}</span>
+                            </div>
+                        \`;
+                    }).join('')
+                    : '<div class="recent-empty">No recent sessions yet</div>')
+                : '<div class="recent-empty">Loading recent sessions...</div>';
+            const streakNote = isAuthenticated ? '' : '<div class="stats-note">Sign in to access streaks.</div>';
 
             app.innerHTML = \`
-                <div class="menu-container">
-                    <div class="menu-title">CodeType</div>
-                    <div class="menu-subtitle">Typing game for developers</div>
-                    <div class="menu-buttons">
-                        <button class="menu-btn" onclick="startSolo()">Open CodeType</button>
-                        <button class="menu-btn" onclick="showMultiplayerOptions()">
-                            Start Team Game
-                        </button>
-                        \${authButton}
+                <div class="welcome-container">
+                    <div class="welcome-header">
+                        <div class="welcome-title">CodeType</div>
+                        <div class="welcome-subtitle">Typing Game for Developers</div>
                     </div>
-                    <div style="margin-top: 24px; font-size: 11px;">
-                        \${userDisplay}
+                    <div class="welcome-grid">
+                        <div class="welcome-column">
+                            <div class="welcome-section">
+                                <div class="welcome-section-title">Start</div>
+                                <div class="start-links">
+                                    <button class="start-link" onclick="startSolo()">
+                                        <span class="start-icon">\${soloIcon}</span>
+                                        Solo Game
+                                    </button>
+                                    <button class="start-link" onclick="showMultiplayerOptions()">
+                                        <span class="start-icon">\${teamIcon}</span>
+                                        Team Game
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="welcome-section">
+                                <div class="welcome-section-title">Recent</div>
+                                <div class="recent-list">
+                                    \${recentHtml}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="welcome-column">
+                            <div class="welcome-section">
+                                <div class="welcome-section-title">Stats</div>
+                                <div class="stats-list">
+                                    \${statsHtml}
+                                </div>
+                                \${streakNote}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="welcome-footer">
+                        <span>created by nishant hada</span>
+                        <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">mit license</a>
+                        <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">star on github</a>
                     </div>
                 </div>
             \`;
@@ -1108,78 +1338,7 @@ export class CodeTypePanel {
         }
 
         function renderStats(data, isAuthenticated, user) {
-            state.streakData = data.streakData;
-            const avgWpm = data.avgWpm || (data.totalGamesPlayed > 0 ? Math.round(data.totalWpm / data.totalGamesPlayed) : 0);
-            const gamesPlayed = data.totalGamesPlayed || data.gamesPlayed || 0;
-            const bestWpm = data.bestWpm || 0;
-            const currentStreak = data.currentStreak || 0;
-            const longestStreak = data.longestStreak || 0;
-            const games = data.games || [];
-            const authButton = isAuthenticated
-                ? \`<button class="menu-btn" onclick="logout()">Sign Out</button>\`
-                : \`<button class="menu-btn" onclick="login()">Sign In</button>\`;
-
-            const streakHeatmap = state.streakData && state.streakData.activities
-                ? renderStreakHeatmap(state.streakData.activities)
-                : (isAuthenticated
-                    ? '<div style="color: var(--vscode-descriptionForeground); text-align: left; padding: 20px;">No activity data yet. Start playing!</div>'
-                    : \`<div style="text-align: left; padding: 20px;">
-                        <div style="color: var(--vscode-descriptionForeground); margin-bottom: 12px;">Sign in to track your daily streak and sync progress across devices</div>
-                        <button class="menu-btn" onclick="login()" style="display: inline-flex; padding: 8px 16px;">Sign In</button>
-                    </div>\`);
-
-            const app = document.getElementById('app');
-            const statsSubtitle = isAuthenticated
-                ? ''
-                : '<div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 16px;">Showing local stats from this device only</div>';
-
-            app.innerHTML = \`
-                <div class="leaderboard-container" style="max-width: 800px;">
-                    <h2 class="section-title">CodeType</h2>
-                    <div class="menu-subtitle">Typing game for developers</div>
-                    <div class="actions-bar" style="margin-bottom: 20px;">
-                        <button class="menu-btn" onclick="startSolo()">Open CodeType</button>
-                        <button class="menu-btn" onclick="showMultiplayerOptions()">Start Team Game</button>
-                        \${authButton}
-                    </div>
-                    <h2 class="section-title" style="margin-top: 8px;">My Stats</h2>
-                    \${statsSubtitle}
-                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px;">
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
-                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${gamesPlayed}</div>
-                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Sessions</div>
-                        </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
-                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${avgWpm}</div>
-                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Avg WPM</div>
-                        </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
-                            <div style="font-size: 28px; color: var(--vscode-textLink-foreground);">\${bestWpm}</div>
-                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Best WPM</div>
-                        </div>
-                        <div style="background: var(--vscode-editorWidget-background); padding: 20px; text-align: left; border-radius: 4px;">
-                            <div style="font-size: 28px; color: \${isAuthenticated ? '#39d353' : 'var(--vscode-descriptionForeground)'};">\${isAuthenticated ? currentStreak : '-'}</div>
-                            <div style="color: var(--vscode-descriptionForeground); font-size: 11px;">Day Streak\${isAuthenticated ? '' : '*'}</div>
-                        </div>
-                    </div>
-
-                    <h3 style="color: var(--vscode-descriptionForeground); margin-bottom: 12px; font-size: 13px;">Activity</h3>
-                    <div style="background: var(--vscode-editorWidget-background); padding: 16px; border-radius: 4px; margin-bottom: 24px; overflow-x: auto;">
-                        \${streakHeatmap}
-                    </div>
-
-                    <h3 style="color: var(--vscode-descriptionForeground); margin-bottom: 12px; font-size: 13px;">Recent Sessions</h3>
-                    \${games.slice(-10).reverse().map(g => \`
-                        <div class="leaderboard-entry">
-                            <span style="color: var(--vscode-descriptionForeground); font-size: 11px; width: 90px;">
-                                \${new Date(g.playedAt || g.timestamp).toLocaleDateString()}
-                            </span>
-                            <span style="flex: 1;">\${g.wpm} WPM</span>
-                            <span style="color: var(--vscode-descriptionForeground);">\${g.accuracy}%</span>
-                        </div>
-                    \`).join('') || '<div style="color: var(--vscode-descriptionForeground);">No sessions yet</div>'}
-                </div>
-            \`;
+            renderWelcome(data, isAuthenticated, user);
         }
 
         function renderStreakHeatmap(activities) {
@@ -1292,7 +1451,7 @@ export class CodeTypePanel {
         }
 
         function goToMenu() {
-            showStats();
+            showWelcome();
         }
 
         function startSolo() {
@@ -1306,10 +1465,10 @@ export class CodeTypePanel {
             renderLoading('Loading new snippet...');
         }
 
-        function showStats() {
-            state.mode = 'stats';
+        function showWelcome() {
+            state.mode = 'menu';
             vscode.postMessage({ type: 'getStats' });
-            renderLoading('Loading stats...');
+            renderWelcome(state.stats, state.isAuthenticated, state.user);
         }
 
         function login() {
@@ -1326,7 +1485,7 @@ export class CodeTypePanel {
             const app = document.getElementById('app');
             app.innerHTML = \`
                 <div class="menu-container">
-                    <div class="menu-title">Start Team Game</div>
+                    <div class="menu-title">Team Game</div>
                     <div class="menu-subtitle">Race against your team!</div>
 
                     <div style="margin-bottom: 24px;">
@@ -1761,6 +1920,9 @@ export class CodeTypePanel {
                     renderResults(message.result, message.stats);
                     break;
                 case 'stats':
+                    state.isAuthenticated = message.isAuthenticated;
+                    state.user = message.user;
+                    state.stats = message.data;
                     renderStats(message.data, message.isAuthenticated, message.user);
                     break;
                 case 'error':

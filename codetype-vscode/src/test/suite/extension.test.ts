@@ -19,11 +19,7 @@ suite('Extension Test Suite', () => {
         const commands = await vscode.commands.getCommands(true);
 
         const expectedCommands = [
-            'codetype.start',
-            'codetype.solo',
-            'codetype.team',
-            'codetype.login',
-            'codetype.logout'
+            'codetype.typingGame'
         ];
 
         for (const cmd of expectedCommands) {
@@ -42,22 +38,16 @@ suite('Extension Test Suite', () => {
         assert.strictEqual(config.get('useWorkspaceCode'), true);
     });
 
-    test('Start command should open webview panel', async () => {
-        // Execute the start command
-        await vscode.commands.executeCommand('codetype.start');
+    test('Typing game command should open webview panel', async () => {
+        // Execute the typing game command
+        await vscode.commands.executeCommand('codetype.typingGame');
 
         // Give it a moment to open
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Check that a webview panel is open
         // Note: We can't directly check webview panels, but we can verify no error was thrown
-        assert.ok(true, 'Start command executed without error');
-    });
-
-    test('Solo command should open game', async () => {
-        await vscode.commands.executeCommand('codetype.solo');
-        await new Promise(resolve => setTimeout(resolve, 500));
-        assert.ok(true, 'Solo command executed without error');
+        assert.ok(true, 'Typing game command executed without error');
     });
 
 });

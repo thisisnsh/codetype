@@ -16,7 +16,7 @@ suite('WebView UI Test Suite', () => {
 
     suite('Game Panel Creation', () => {
         test('should open panel with stealth title', async () => {
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(500);
 
             // The panel should be named like a normal file (menu.ts, solo.ts, stats.ts, team.ts)
@@ -25,9 +25,9 @@ suite('WebView UI Test Suite', () => {
         });
 
         test('should handle multiple open attempts', async () => {
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(300);
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(300);
 
             // Should allow multiple panels without errors
@@ -35,54 +35,15 @@ suite('WebView UI Test Suite', () => {
         });
     });
 
-    suite('Solo Mode', () => {
-        test('should start solo game without error', async () => {
-            await vscode.commands.executeCommand('codetype.solo');
-            await sleep(500);
-            assert.ok(true, 'Solo mode started');
-        });
-
-        test('should load code sample', async () => {
-            await vscode.commands.executeCommand('codetype.solo');
-            await sleep(1000);
-            // If no error thrown, code was loaded
-            assert.ok(true, 'Code sample loaded');
-        });
-    });
-
-    suite('Team Mode', () => {
-        test('should open team options view', async () => {
-            await vscode.commands.executeCommand('codetype.team');
-            await sleep(500);
-            assert.ok(true, 'Team mode opened');
-        });
-    });
-
-    suite('Leaderboard', () => {
-        test('should open leaderboard view', async () => {
-            await vscode.commands.executeCommand('codetype.leaderboard');
-            await sleep(500);
-            assert.ok(true, 'Leaderboard opened');
-        });
-    });
-
-    suite('Stats', () => {
-        test('should open stats view on start', async () => {
-            await vscode.commands.executeCommand('codetype.start');
-            await sleep(500);
-            assert.ok(true, 'Stats opened');
-        });
-    });
-
     suite('Panel Lifecycle', () => {
         test('should dispose properly when closed', async () => {
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(300);
             await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
             await sleep(300);
 
             // Should be able to reopen
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(300);
             assert.ok(true, 'Panel lifecycle handled correctly');
         });
@@ -94,7 +55,7 @@ suite('WebView UI Test Suite', () => {
             const originalTheme = config.get('theme');
 
             await config.update('theme', 'minimal', vscode.ConfigurationTarget.Global);
-            await vscode.commands.executeCommand('codetype.start');
+            await vscode.commands.executeCommand('codetype.typingGame');
             await sleep(300);
 
             // Restore
@@ -167,7 +128,7 @@ suite('Keyboard Shortcuts', () => {
     test('should have start command registered', async () => {
         // Command should exist
         const commands = await vscode.commands.getCommands(true);
-        assert.ok(commands.includes('codetype.start'));
+        assert.ok(commands.includes('codetype.typingGame'));
     });
 });
 

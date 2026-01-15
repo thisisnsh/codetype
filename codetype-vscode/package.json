@@ -33,40 +33,16 @@
     "theme": "dark"
   },
   "activationEvents": [
-    "onCommand:codetype.start",
-    "onCommand:codetype.solo",
-    "onCommand:codetype.team",
-    "onCommand:codetype.login",
-    "onCommand:codetype.logout",
+    "onCommand:codetype.typingGame",
     "onUri"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "codetype.start",
-        "title": "Open CodeType",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.solo",
-        "title": "Start Solo Game",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.team",
-        "title": "Start Team Game",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.login",
-        "title": "Sign In",
-        "category": "CodeType"
-      },
-      {
-        "command": "codetype.logout",
-        "title": "Sign Out",
-        "category": "CodeType"
+        "command": "codetype.typingGame",
+        "title": "typing game",
+        "category": "codetype"
       }
     ],
     "configuration": {
@@ -91,7 +67,7 @@
     },
     "keybindings": [
       {
-        "command": "codetype.start",
+        "command": "codetype.typingGame",
         "key": "ctrl+shift+t",
         "mac": "cmd+shift+t"
       }

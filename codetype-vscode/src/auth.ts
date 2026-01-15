@@ -43,9 +43,8 @@ export class AuthService {
      */
     private async loadStoredAuth() {
         const token = await this.context.secrets.get('codetype.token');
-        const refreshToken = await this.context.secrets.get('codetype.refreshToken');
 
-        if (token && refreshToken) {
+        if (token) {
             try {
                 // Verify the token is still valid
                 const user = await this.verifyToken(token);
@@ -57,21 +56,6 @@ export class AuthService {
                     };
                     this._onAuthStateChanged.fire(this.authState);
                     return;
-                }
-
-                // Token expired, try to refresh
-                const newToken = await this.refreshToken(refreshToken);
-                if (newToken) {
-                    const refreshedUser = await this.verifyToken(newToken);
-                    if (refreshedUser) {
-                        this.authState = {
-                            isAuthenticated: true,
-                            user: refreshedUser,
-                            token: newToken
-                        };
-                        this._onAuthStateChanged.fire(this.authState);
-                        return;
-                    }
                 }
             } catch (error) {
                 console.warn('Failed to restore auth session:', error);
@@ -112,9 +96,7 @@ export class AuthService {
             return null;
         }
 
-        // Check if token needs refresh (tokens expire after 1 hour)
-        // For simplicity, we try to use the stored token
-        // In production, you'd check the expiry time
+        // Tokens expire after 1 hour; prompt re-auth if verification fails.
         return this.authState.token;
     }
 
@@ -145,9 +127,8 @@ export class AuthService {
         try {
             const params = new URLSearchParams(uri.query);
             const token = params.get('token');
-            const refreshToken = params.get('refreshToken');
 
-            if (!token || !refreshToken) {
+            if (!token) {
                 vscode.window.showErrorMessage('Authentication failed: Missing token');
                 return false;
             }
@@ -161,7 +142,6 @@ export class AuthService {
 
             // Store tokens securely
             await this.context.secrets.store('codetype.token', token);
-            await this.context.secrets.store('codetype.refreshToken', refreshToken);
 
             // Update auth state
             this.authState = {
@@ -186,7 +166,6 @@ export class AuthService {
     async logout(): Promise<void> {
         // Clear stored tokens
         await this.context.secrets.delete('codetype.token');
-        await this.context.secrets.delete('codetype.refreshToken');
 
         // Clear auth state
         this.authState = {
@@ -244,7 +223,7 @@ export class AuthService {
     /**
      * Prompt user to choose a username
      */
-    private async promptForUsername(token: string): Promise<string | undefined> {
+    private async promptForUsername(_token: string): Promise<string | undefined> {
         return await vscode.window.showInputBox({
             prompt: 'Choose your username for CodeType',
             placeHolder: 'speedcoder42',
@@ -298,45 +277,6 @@ export class AuthService {
             return data.user || null;
         } catch (error) {
             console.error('Username registration failed:', error);
-            return null;
-        }
-    }
-
-    /**
-     * Refresh an expired token
-     */
-    private async refreshToken(refreshToken: string): Promise<string | null> {
-        // Firebase token refresh via REST API
-        const apiKey = process.env.FIREBASE_API_KEY || '';
-        if (!apiKey) {
-            return null;
-        }
-
-        try {
-            const response = await fetch(`https://securetoken.googleapis.com/v1/token?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `grant_type=refresh_token&refresh_token=${refreshToken}`
-            });
-
-            if (!response.ok) {
-                return null;
-            }
-
-            const data = await response.json() as { id_token?: string; refresh_token?: string };
-
-            if (data.id_token) {
-                // Store the new refresh token if provided
-                if (data.refresh_token) {
-                    await this.context.secrets.store('codetype.refreshToken', data.refresh_token);
-                }
-                await this.context.secrets.store('codetype.token', data.id_token);
-                return data.id_token;
-            }
-
-            return null;
-        } catch (error) {
-            console.error('Token refresh failed:', error);
             return null;
         }
     }

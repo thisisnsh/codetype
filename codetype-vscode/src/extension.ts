@@ -11,7 +11,7 @@ let authService: AuthService;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('CodeType extension is activating...');
-    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to play.');
+    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to open the typing game.');
 
     // Initialize services
     authService = new AuthService(context);
@@ -39,25 +39,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register commands
     context.subscriptions.push(
-        vscode.commands.registerCommand('codetype.start', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'stats');
-        }),
-
-        vscode.commands.registerCommand('codetype.solo', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'solo');
-        }),
-
-        vscode.commands.registerCommand('codetype.team', () => {
-            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'team');
-        }),
-
-        vscode.commands.registerCommand('codetype.login', async () => {
-            await authService.login();
-        }),
-
-        vscode.commands.registerCommand('codetype.logout', async () => {
-            await authService.logout();
-            CodeTypePanel.refreshAll();
+        vscode.commands.registerCommand('codetype.typingGame', () => {
+            CodeTypePanel.createOrShow(context.extensionUri, context, apiClient, codeSampleProvider, authService, 'menu');
         })
     );
 
