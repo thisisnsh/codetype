@@ -1,11 +1,13 @@
 name: Publish Extension
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "*"
 
 jobs:
   publish:
+    if: ${{ github.event.created }}
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -85,7 +87,7 @@ jobs:
       - name: Build website
         run: npm run build
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy Website
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
