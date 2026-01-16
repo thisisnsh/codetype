@@ -1,7 +1,7 @@
 {
   "name": "codetype",
   "displayName": "CodeType",
-  "description": "Speed typing game for developers. Improve your coding speed while looking productive.",
+  "description": "Type code for fun while vibe coding. A VS Code game with real snippets, solo/team play, and leaderboards.",
   "version": "1.0.0",
   "publisher": "thisisnsh",
   "license": "MIT",
@@ -41,7 +41,7 @@
     "commands": [
       {
         "command": "codetype.typingGame",
-        "title": "typing game",
+        "title": "CodeType: Play Game",
         "category": "codetype"
       }
     ],

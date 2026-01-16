@@ -11,7 +11,7 @@ let authService: AuthService;
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('CodeType extension is activating...');
-    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to open the typing game.');
+    vscode.window.showInformationMessage('CodeType activated! Press Cmd+Shift+T to open the game.');
 
     // Initialize services
     authService = new AuthService(context);

@@ -1239,8 +1239,8 @@ export class CodeTypePanel {
                 <div class="welcome-shell">
                     <div class="welcome-container">
                         <div class="welcome-header">
-                            <div class="welcome-title">Code Type</div>
-                            <div class="welcome-subtitle">Typing practice for developers</div>
+                            <div class="welcome-title">CodeType</div>
+                            <div class="welcome-subtitle">Type code for fun while vibe coding</div>
                         </div>
                         <div class="welcome-grid">
                             <div class="welcome-column">
