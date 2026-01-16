@@ -599,24 +599,16 @@ export class CodeTypePanel {
         }
 
         .streak-calendar {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-            align-items: start;
-            justify-items: center;
-        }
-
-        .streak-month {
             display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 6px;
+            margin-top: 8px;
         }
 
         .streak-day-labels {
             display: grid;
             grid-template-columns: repeat(7, 18px);
-            gap: 4px;
+            gap: 5px;
             font-size: 10px;
             color: var(--vscode-descriptionForeground);
             text-align: center;
@@ -625,7 +617,7 @@ export class CodeTypePanel {
         .streak-days {
             display: grid;
             grid-template-columns: repeat(7, 18px);
-            gap: 4px;
+            gap: 5px;
         }
 
         .streak-day {
@@ -1259,32 +1251,29 @@ export class CodeTypePanel {
             const signInIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h3.5a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7"></path><path d="M3 8h6"></path><path d="M6.5 5.5 9 8l-2.5 2.5"></path></svg>';
             const signOutIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2H9"></path><path d="M13 8H7"></path><path d="M10.5 5.5 13 8l-2.5 2.5"></path></svg>';
 
-            function getRangeLabel(year, month) {
-                const nextMonth = (month + 1) % 12;
-                const startLabel = STREAK_MONTHS[month].toLowerCase();
-                const endLabel = STREAK_MONTHS[nextMonth].toLowerCase();
-                return \`\${startLabel}-\${endLabel} \${year}\`;
+            function buildMonthOptions(selectedMonth) {
+                return STREAK_MONTHS.map((month, index) => {
+                    const selected = index === selectedMonth ? ' selected' : '';
+                    return \`<option value="\${index}"\${selected}>\${month}</option>\`;
+                }).join('');
             }
 
-            function buildRangeOptions(selectedYear, selectedMonth) {
+            function buildYearOptions(selectedYear) {
                 const options = [];
                 for (let year = STREAK_MIN_YEAR; year <= STREAK_MAX_YEAR; year++) {
-                    for (let month = 0; month < 12; month++) {
-                        const selected = year === selectedYear && month === selectedMonth ? ' selected' : '';
-                        const label = getRangeLabel(year, month);
-                        options.push(\`<option value="\${year}-\${month}"\${selected}>\${label}</option>\`);
-                    }
+                    const selected = year === selectedYear ? ' selected' : '';
+                    options.push(\`<option value="\${year}"\${selected}>\${year}</option>\`);
                 }
                 return options.join('');
             }
 
-            function buildMonthGrid(year, month) {
-                const firstDay = new Date(year, month, 1);
-                const totalDays = new Date(year, month + 1, 0).getDate();
+            function generateStreakCalendar() {
+                const firstDay = new Date(streakViewYear, streakViewMonth, 1);
+                const totalDays = new Date(streakViewYear, streakViewMonth + 1, 0).getDate();
                 const offset = firstDay.getDay();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const activities = getActivitiesForYear(year);
+                const activities = getActivitiesForYear(streakViewYear);
 
                 let html = '<div class="streak-day-labels">';
                 html += STREAK_DAYS.map((day) => \`<span>\${day}</span>\`).join('');
@@ -1295,7 +1284,7 @@ export class CodeTypePanel {
                 }
 
                 for (let day = 1; day <= totalDays; day++) {
-                    const date = new Date(year, month, day);
+                    const date = new Date(streakViewYear, streakViewMonth, day);
                     const dateKey = date.toISOString().split('T')[0];
                     const activity = activities[dateKey];
                     const gamesPlayed = activity?.gamesPlayed || 0;
@@ -1327,19 +1316,6 @@ export class CodeTypePanel {
 
                 html += '</div>';
                 return html;
-            }
-
-            function generateStreakCalendar() {
-                const nextMonth = (streakViewMonth + 1) % 12;
-                const nextYear = streakViewMonth === 11 ? streakViewYear + 1 : streakViewYear;
-                return \`
-                    <div class="streak-month">
-                        \${buildMonthGrid(streakViewYear, streakViewMonth)}
-                    </div>
-                    <div class="streak-month">
-                        \${buildMonthGrid(nextYear, nextMonth)}
-                    </div>
-                \`;
             }
 
             // Recent games - works locally
@@ -1426,7 +1402,8 @@ export class CodeTypePanel {
                                     </div>
                                     <div class="streak-section">
                                         <div class="streak-controls">
-                                            <select id="streak-range" class="streak-select">\${buildRangeOptions(streakViewYear, streakViewMonth)}</select>
+                                            <select id="streak-month" class="streak-select">\${buildMonthOptions(streakViewMonth)}</select>
+                                            <select id="streak-year" class="streak-select">\${buildYearOptions(streakViewYear)}</select>
                                         </div>
                                         <div class="streak-calendar">
                                             \${generateStreakCalendar()}
@@ -1446,12 +1423,6 @@ export class CodeTypePanel {
             vscode.postMessage({ type: 'getStats', streakYear: year });
         }
 
-        function getNextMonthYear(year, month) {
-            const nextMonth = (month + 1) % 12;
-            const nextYear = month === 11 ? year + 1 : year;
-            return { year: nextYear, month: nextMonth };
-        }
-
         function ensureStreakDataForYear(year) {
             if (!state.isAuthenticated) {
                 return;
@@ -1464,10 +1435,6 @@ export class CodeTypePanel {
 
         function ensureStreakDataForView() {
             ensureStreakDataForYear(streakViewYear);
-            const next = getNextMonthYear(streakViewYear, streakViewMonth);
-            if (next.year !== streakViewYear && next.year <= STREAK_MAX_YEAR) {
-                ensureStreakDataForYear(next.year);
-            }
         }
 
         function updateStreakView(nextYear, nextMonth) {
@@ -1478,16 +1445,23 @@ export class CodeTypePanel {
         }
 
         function setupStreakControls() {
-            const rangeSelect = document.getElementById('streak-range');
+            const monthSelect = document.getElementById('streak-month');
+            const yearSelect = document.getElementById('streak-year');
 
-            if (rangeSelect) {
-                rangeSelect.addEventListener('change', (event) => {
-                    const value = event.target.value || '';
-                    const [yearValue, monthValue] = value.split('-');
-                    const year = parseInt(yearValue, 10);
-                    const month = parseInt(monthValue, 10);
-                    if (!Number.isNaN(year) && !Number.isNaN(month)) {
-                        updateStreakView(year, month);
+            if (monthSelect) {
+                monthSelect.addEventListener('change', (event) => {
+                    const value = parseInt(event.target.value, 10);
+                    if (!Number.isNaN(value)) {
+                        updateStreakView(streakViewYear, value);
+                    }
+                });
+            }
+
+            if (yearSelect) {
+                yearSelect.addEventListener('change', (event) => {
+                    const value = parseInt(event.target.value, 10);
+                    if (!Number.isNaN(value)) {
+                        updateStreakView(value, streakViewMonth);
                     }
                 });
             }
