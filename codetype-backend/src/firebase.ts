@@ -3,6 +3,7 @@ import type {
   UserDocument,
   GameDocument,
   ActivityDocument,
+  RoomDocument,
   FirebaseConfig,
   Env,
 } from './types';
@@ -533,4 +534,43 @@ export async function addGame(
   data: Omit<GameDocument, 'id'>
 ): Promise<string> {
   return firestoreAdd(env, 'games', data);
+}
+
+/**
+ * Create a new room in Firestore
+ */
+export async function createRoom(
+  env: Env,
+  roomData: RoomDocument
+): Promise<void> {
+  await firestoreSet(env, 'rooms', roomData.code, roomData);
+}
+
+/**
+ * Get a room by code from Firestore
+ */
+export async function getRoom(
+  env: Env,
+  code: string
+): Promise<RoomDocument | null> {
+  const room = await firestoreGet<RoomDocument>(env, 'rooms', code);
+  if (!room) {
+    return null;
+  }
+  // Check if room has expired
+  if (room.expiresAt < Date.now()) {
+    return null;
+  }
+  return room;
+}
+
+/**
+ * Check if a room code exists and is not expired
+ */
+export async function isRoomCodeTaken(
+  env: Env,
+  code: string
+): Promise<boolean> {
+  const room = await getRoom(env, code);
+  return room !== null;
 }
