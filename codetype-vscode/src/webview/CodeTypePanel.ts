@@ -443,72 +443,76 @@ export class CodeTypePanel {
             background: var(--vscode-button-hoverBackground);
         }
 
-        /* Welcome screen */
+        /* Welcome screen - VS Code Getting Started style */
         .welcome-shell {
             flex: 1;
             display: flex;
             align-items: flex-start;
-            justify-content: flex-start;
-            padding: 32px 40px 48px;
+            justify-content: center;
+            padding: 10vh 40px 48px;
             overflow-y: auto;
         }
 
         .welcome-container {
-            width: 720px;
-            max-width: 100%;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 1000px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 32px;
         }
 
         .welcome-header {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 6px;
+            text-align: center;
         }
 
         .welcome-title {
-            font-size: 30px;
-            font-weight: 400;
+            font-size: 26px;
+            font-weight: 200;
             color: var(--vscode-foreground);
+            letter-spacing: -0.5px;
         }
 
         .welcome-subtitle {
             color: var(--vscode-descriptionForeground);
-            font-size: 16px;
+            font-size: 13px;
+            font-weight: 400;
         }
 
         .welcome-grid {
             display: grid;
-            grid-template-columns: 320px 260px;
-            gap: 40px;
-            align-items: start;
+            grid-template-columns: repeat(3, minmax(200px, 280px));
+            gap: 48px;
+            justify-content: center;
         }
 
         .welcome-column {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
             min-width: 0;
         }
 
         .welcome-section {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
 
         .welcome-section-title {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--vscode-foreground);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .start-links {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
         }
 
         .start-link {
@@ -522,8 +526,8 @@ export class CodeTypePanel {
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 2px 0;
-            line-height: 1.4;
+            padding: 4px 0;
+            line-height: 1.5;
         }
 
         .start-link:hover {
@@ -537,34 +541,68 @@ export class CodeTypePanel {
             align-items: center;
             justify-content: center;
             color: var(--vscode-textLink-foreground);
+            flex-shrink: 0;
         }
 
-        .stats-list {
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .stat-card {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 2px;
         }
 
-        .stats-item {
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            font-size: 13px;
+        .stat-card-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--vscode-foreground);
         }
 
-        .stats-label {
+        .stat-card-label {
+            font-size: 11px;
             color: var(--vscode-descriptionForeground);
         }
 
-        .stats-value {
-            color: var(--vscode-foreground);
-            font-weight: 600;
+        .streak-section {
+            margin-top: 8px;
+        }
+
+        .streak-label {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-bottom: 8px;
+        }
+
+        .streak-boxes {
+            display: flex;
+            gap: 4px;
+        }
+
+        .streak-box {
+            width: 14px;
+            height: 14px;
+            border-radius: 2px;
+            background: var(--vscode-editor-inactiveSelectionBackground, #3c3c3c);
+        }
+
+        .streak-box.filled {
+            background: var(--vscode-terminal-ansiGreen, #4ec9b0);
+        }
+
+        .streak-box.today {
+            outline: 1px solid var(--vscode-focusBorder);
+            outline-offset: 1px;
         }
 
         .stats-note {
-            font-size: 12px;
+            font-size: 11px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 4px;
+            margin-top: 12px;
+            line-height: 1.5;
         }
 
         .link-button {
@@ -573,9 +611,8 @@ export class CodeTypePanel {
             color: var(--vscode-textLink-foreground);
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
+            font-size: 11px;
             padding: 0;
-            margin-left: 4px;
         }
 
         .link-button:hover {
@@ -585,65 +622,97 @@ export class CodeTypePanel {
         .recent-list {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
         .recent-item {
             display: flex;
-            gap: 12px;
+            align-items: center;
+            gap: 8px;
             font-size: 13px;
+            padding: 6px 0;
+            border-bottom: 1px solid var(--vscode-widget-border, transparent);
         }
 
-        .recent-date {
-            width: 90px;
-            color: var(--vscode-descriptionForeground);
+        .recent-item:last-child {
+            border-bottom: none;
         }
 
         .recent-wpm {
             color: var(--vscode-textLink-foreground);
-            min-width: 70px;
+            font-weight: 600;
+            min-width: 55px;
         }
 
         .recent-accuracy {
             color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+            min-width: 40px;
+        }
+
+        .recent-date {
+            color: var(--vscode-descriptionForeground);
+            font-size: 11px;
+            margin-left: auto;
         }
 
         .recent-empty {
             color: var(--vscode-descriptionForeground);
             font-size: 12px;
+            font-style: italic;
         }
 
         .welcome-footer {
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 16px;
             flex-wrap: wrap;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 20px;
+            margin-top: 16px;
+            padding-top: 24px;
+            border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
         }
 
-        .welcome-footer a {
+        .welcome-footer a,
+        .welcome-footer button {
             color: var(--vscode-textLink-foreground);
             text-decoration: none;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: inherit;
+            padding: 0;
         }
 
-        .welcome-footer a:hover {
+        .welcome-footer a:hover,
+        .welcome-footer button:hover {
             text-decoration: underline;
         }
 
         .footer-separator {
-            opacity: 0.6;
+            color: var(--vscode-descriptionForeground);
+            opacity: 0.5;
         }
 
-        @media (max-width: 700px) {
+        @media (max-width: 900px) {
             .welcome-shell {
-                padding: 24px 24px 40px;
+                padding: 5vh 24px 40px;
             }
 
             .welcome-grid {
+                grid-template-columns: repeat(2, minmax(180px, 280px));
+                gap: 32px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .welcome-grid {
                 grid-template-columns: 1fr;
                 gap: 24px;
+                max-width: 300px;
             }
         }
 
@@ -1060,51 +1129,58 @@ export class CodeTypePanel {
             const bestWpm = stats.bestWpm || 0;
             const currentStreak = stats.currentStreak || 0;
             const games = stats.games || [];
+            const streakData = stats.streakData || {};
+            const streakActivities = streakData.activities || {};
 
             const soloIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="2.7"></circle><path d="M3.5 13.2c.8-2.3 2.6-3.4 4.5-3.4s3.7 1.1 4.5 3.4"></path></svg>';
             const teamIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="5.2" r="2.3"></circle><circle cx="11.2" cy="6" r="1.9"></circle><path d="M1.8 13.2c.6-2 2.1-3 3.9-3"></path><path d="M8.4 13.2c.6-1.7 1.9-2.6 3.4-2.6"></path></svg>';
-            const displayValue = (value) => (hasData ? value : '--');
-            const streakLabel = isAuthenticated ? 'Day Streak' : 'Day Streak*';
-            const streakValue = isAuthenticated ? currentStreak : '--';
-            const statsRows = [
-                { label: 'Sessions', value: displayValue(gamesPlayed) },
-                { label: 'Avg WPM', value: displayValue(avgWpm) },
-                { label: 'Best WPM', value: displayValue(bestWpm) },
-                { label: streakLabel, value: displayValue(streakValue) }
-            ];
-            const statsHtml = statsRows.map((row) => \`
-                <div class="stats-item">
-                    <span class="stats-label">\${row.label}</span>
-                    <span class="stats-value">\${row.value}</span>
-                </div>
-            \`).join('');
-            const recentHtml = hasData
-                ? (games.length
-                    ? games.slice(-5).reverse().map((game) => {
-                        const dateValue = game.playedAt || game.timestamp;
-                        const dateLabel = dateValue ? new Date(dateValue).toLocaleDateString() : '--';
-                        const wpmValue = typeof game.wpm === 'number' ? game.wpm + ' WPM' : '--';
-                        const accuracyValue = typeof game.accuracy === 'number' ? game.accuracy + '%' : '--';
-                        return \`
-                            <div class="recent-item">
-                                <span class="recent-date">\${dateLabel}</span>
-                                <span class="recent-wpm">\${wpmValue}</span>
-                                <span class="recent-accuracy">\${accuracyValue}</span>
-                            </div>
-                        \`;
-                    }).join('')
-                    : '<div class="recent-empty">No recent sessions yet</div>')
-                : '<div class="recent-empty">Loading recent sessions...</div>';
-            const streakNote = isAuthenticated
-                ? ''
-                : '<div class="stats-note">Sign in or sign up to access streaks.<button class="link-button" onclick="login()">Sign in / Sign up</button></div>';
+
+            // Generate streak boxes for last 7 days
+            function generateStreakBoxes() {
+                const boxes = [];
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                for (let i = 6; i >= 0; i--) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const isToday = i === 0;
+                    const hasActivity = isAuthenticated && streakActivities[dateStr] && streakActivities[dateStr].gamesPlayed > 0;
+
+                    let classes = 'streak-box';
+                    if (hasActivity) classes += ' filled';
+                    if (isToday) classes += ' today';
+
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    boxes.push(\`<div class="\${classes}" title="\${dayName}, \${dateStr}\${hasActivity ? ' - Active' : ''}"></div>\`);
+                }
+                return boxes.join('');
+            }
+
+            // Recent games - works locally
+            const recentHtml = games.length
+                ? games.slice(-5).reverse().map((game) => {
+                    const dateValue = game.playedAt || game.timestamp;
+                    const dateLabel = dateValue ? new Date(dateValue).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                    const wpmValue = typeof game.wpm === 'number' ? game.wpm + ' wpm' : '--';
+                    const accuracyValue = typeof game.accuracy === 'number' ? game.accuracy + '%' : '';
+                    return \`
+                        <div class="recent-item">
+                            <span class="recent-wpm">\${wpmValue}</span>
+                            <span class="recent-accuracy">\${accuracyValue}</span>
+                            <span class="recent-date">\${dateLabel}</span>
+                        </div>
+                    \`;
+                }).join('')
+                : '<div class="recent-empty">No sessions yet. Start typing!</div>';
 
             app.innerHTML = \`
                 <div class="welcome-shell">
                     <div class="welcome-container">
                         <div class="welcome-header">
                             <div class="welcome-title">CodeType</div>
-                            <div class="welcome-subtitle">Typing Game for Developers</div>
+                            <div class="welcome-subtitle">Typing practice for developers</div>
                         </div>
                         <div class="welcome-grid">
                             <div class="welcome-column">
@@ -1121,6 +1197,8 @@ export class CodeTypePanel {
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                            <div class="welcome-column">
                                 <div class="welcome-section">
                                     <div class="welcome-section-title">Recent</div>
                                     <div class="recent-list">
@@ -1131,19 +1209,47 @@ export class CodeTypePanel {
                             <div class="welcome-column">
                                 <div class="welcome-section">
                                     <div class="welcome-section-title">Stats</div>
-                                    <div class="stats-list">
-                                        \${statsHtml}
+                                    <div class="stats-grid">
+                                        <div class="stat-card">
+                                            <div class="stat-card-value">\${hasData ? gamesPlayed : '--'}</div>
+                                            <div class="stat-card-label">Sessions</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-value">\${hasData ? avgWpm : '--'}</div>
+                                            <div class="stat-card-label">Avg WPM</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-value">\${hasData ? bestWpm : '--'}</div>
+                                            <div class="stat-card-label">Best WPM</div>
+                                        </div>
+                                        <div class="stat-card">
+                                            <div class="stat-card-value">\${isAuthenticated && hasData ? currentStreak : '--'}</div>
+                                            <div class="stat-card-label">Day Streak</div>
+                                        </div>
                                     </div>
-                                    \${streakNote}
+                                    <div class="streak-section">
+                                        <div class="streak-label">Last 7 days</div>
+                                        <div class="streak-boxes">
+                                            \${generateStreakBoxes()}
+                                        </div>
+                                    </div>
+                                    <div class="stats-note">
+                                        \${isAuthenticated
+                                            ? 'Stats synced to your account.'
+                                            : 'These are local stats. <button class="link-button" onclick="login()">Sign in</button> to sync across devices.'}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         <div class="welcome-footer">
-                            <span>created by nishant hada</span>
-                            <span class="footer-separator">•</span>
-                            <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">mit license</a>
-                            <span class="footer-separator">•</span>
-                            <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">star on github</a>
+                            \${isAuthenticated && user
+                                ? \`<span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button><span class="footer-separator">·</span>\`
+                                : ''}
+                            <span>Created by Nishant Hada</span>
+                            <span class="footer-separator">·</span>
+                            <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">GitHub</a>
+                            <span class="footer-separator">·</span>
+                            <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
                         </div>
                     </div>
                 </div>
