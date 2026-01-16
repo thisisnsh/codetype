@@ -40,6 +40,14 @@ export interface ActivityDocument {
   bestWpm: number;
 }
 
+export interface RoomDocument {
+  code: string;
+  hostId: string;
+  hostUsername: string;
+  createdAt: number;
+  expiresAt: number;
+}
+
 // API request/response types
 
 export interface DecodedToken {
@@ -113,12 +121,10 @@ export interface FirebaseConfig {
 // Env interface extension
 export interface Env {
   ROOMS: DurableObjectNamespace;
-  CODETYPE_KV: KVNamespace;
   FIREBASE_PROJECT_ID: string;
   FIREBASE_API_KEY: string;
   FIREBASE_CONFIG: string; // JSON string of FirebaseConfig
   FIREBASE_JWT_CERTS?: string; // JSON map of key id to PEM
   ALLOWED_ORIGINS?: string; // Comma-separated allowlist for CORS
   RATE_LIMIT_PER_MINUTE?: string;
-  ALLOW_ANON_SCORES?: string;
 }
