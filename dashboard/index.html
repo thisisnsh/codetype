@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+  
+    
+  
+  
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard | CodeType</title>
+  <meta name="description" content="View your CodeType stats, streaks, and progress at a glance.">
+  <meta name="author" content="Nishant Hada">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1e1e1e">
+  <link rel="canonical" href="https://codetype.ai/dashboard/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://codetype.ai/dashboard/">
+  <meta property="og:title" content="Dashboard | CodeType">
+  <meta property="og:description" content="View your CodeType stats, streaks, and progress at a glance.">
+  <meta property="og:site_name" content="CodeType">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Dashboard | CodeType">
+  <meta name="twitter:description" content="View your CodeType stats, streaks, and progress at a glance.">
+  <link rel="stylesheet" href="/assets/css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+  <script src="/assets/js/firebase-config.js"></script>
+</head>
+<body>
+  <div class="vscode-window">
+    <!-- Title Bar -->
+    <div class="titlebar">
+      <div class="titlebar-traffic-lights">
+        <div class="traffic-light red"></div>
+        <div class="traffic-light yellow"></div>
+        <div class="traffic-light green"></div>
+      </div>
+      <div class="titlebar-title">CodeType - Visual Studio Code</div>
+      <div class="titlebar-actions"></div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- Activity Bar -->
+      <nav class="activity-bar">
+        <a href="/#hero" class="activity-icon active" title="Explorer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+        </a>
+        <a href="/#features" class="activity-icon" title="Features">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </a>
+        <a href="/#download" class="activity-icon" title="Download">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+            <polyline points="7,10 12,15 17,10"/>
+            <line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+        </a>
+        <a href="/#faq" class="activity-icon" title="FAQ">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </a>
+      </nav>
+
+      <!-- Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">Explorer</div>
+        <div class="file-tree">
+          <a href="/" class="file-item folder">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+            </svg>
+            <span>codetype</span>
+          </a>
+          <a href="/#hero" class="file-item active" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>welcome.ts</span>
+          </a>
+          <a href="/#features" class="file-item" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>features.ts</span>
+          </a>
+          <a href="/#download" class="file-item" style="padding-left: 24px;">
+            <svg class="icon json" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm3.5 11c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm7 0c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm-3.5-1c.83 0 1.5-.67 1.5-1.5 0-.63-.38-1.16-.92-1.38.17-.25.27-.54.27-.87 0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5c0 .33.1.62.27.87-.54.22-.92.75-.92 1.38 0 .83.67 1.5 1.5 1.5z"/>
+            </svg>
+            <span>config.json</span>
+          </a>
+          <a href="/#opensource" class="file-item" style="padding-left: 24px;">
+            <svg class="icon md" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20.56 18H3.44C2.65 18 2 17.37 2 16.59V7.41C2 6.63 2.65 6 3.44 6h17.12c.79 0 1.44.63 1.44 1.41v9.18c0 .78-.65 1.41-1.44 1.41zM6.81 15.19v-3.66l1.92 2.35 1.92-2.35v3.66h1.93V8.81h-1.93l-1.92 2.35-1.92-2.35H4.89v6.38h1.92zm10.89-4.22h-1.93v1.92h1.93v1.93h1.93v-1.93h1.93v-1.92h-1.93V9.04h-1.93v1.93z"/>
+            </svg>
+            <span>README.md</span>
+          </a>
+          <a href="/dashboard/" class="file-item folder" style="margin-top: 12px;">
+            <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+            </svg>
+            <span>user</span>
+          </a>
+          <a href="/dashboard/" class="file-item" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>dashboard.ts</span>
+          </a>
+          <a href="/leaderboard/" class="file-item" style="padding-left: 24px;">
+            <svg class="icon ts" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>leaderboard.ts</span>
+          </a>
+          <a href="/auth/login/" class="file-item" style="padding-left: 24px;">
+            <svg class="icon json" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2zm3.5 11c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm7 0c.28 0 .5-.22.5-.5s-.22-.5-.5-.5-.5.22-.5.5.22.5.5.5zm-3.5-1c.83 0 1.5-.67 1.5-1.5 0-.63-.38-1.16-.92-1.38.17-.25.27-.54.27-.87 0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5c0 .33.1.62.27.87-.54.22-.92.75-.92 1.38 0 .83.67 1.5 1.5 1.5z"/>
+            </svg>
+            <span>login.json</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- Editor Area -->
+      <main class="editor-area">
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+          <button class="sidebar-toggle" type="button" aria-controls="sidebar" aria-expanded="false">
+            <span class="sr-only">Toggle explorer</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <div class="tab active">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="#519aba">
+              <path d="M3 3h18v18H3V3zm16.5 8.25h-6v1.5h2.25v6h1.5v-6h2.25v-1.5zm-8.25 0h-1.5v4.5c0 .3-.03.54-.09.7-.06.17-.18.3-.35.37-.17.08-.42.12-.75.12-.24 0-.52-.03-.84-.1v1.35c.39.08.75.12 1.08.12.54 0 1-.1 1.38-.3.37-.2.66-.5.84-.9.19-.4.28-.88.28-1.45v-4.41z"/>
+            </svg>
+            <span>welcome.ts</span>
+            <span class="tab-close">&times;</span>
+          </div>
+        </div>
+
+        <!-- Breadcrumb -->
+        
+        <nav class="breadcrumb" aria-label="Breadcrumb">
+          
+            
+            <a href="/" class="breadcrumb-link">codetype</a>
+          
+            
+              <span class="breadcrumb-separator" aria-hidden="true">&gt;</span>
+            
+            <a href="/dashboard/" class="breadcrumb-link" aria-current="page">dashboard.ts</a>
+          
+        </nav>
+
+        <!-- Editor Content -->
+        <div class="editor-content">
+          
+<div class="dashboard-container">
+  <!-- Loading State -->
+  <div id="dashboard-loading" class="dashboard-loading">
+    <div class="spinner"></div>
+    <p>Loading your stats...</p>
+  </div>
+
+  <!-- Not Authenticated -->
+  <div id="dashboard-auth" class="dashboard-auth" style="display: none;">
+    <h2>Sign in to view your dashboard</h2>
+    <p>Track your progress, maintain your streak, and compete on leaderboards.</p>
+    <a href="/auth/login/" class="btn btn-primary">Sign In</a>
+  </div>
+
+  <!-- Dashboard Content -->
+  <div id="dashboard-content" class="dashboard-content" style="display: none;">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="profile-info">
+        <img id="profile-photo" src="" alt="Profile" class="profile-photo">
+        <div class="profile-details">
+          <h1 id="profile-name" class="profile-name"></h1>
+          <p id="profile-email" class="profile-email"></p>
+        </div>
+      </div>
+      <button id="signout-btn" class="btn btn-secondary">Sign Out</button>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-overview">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-games">0</div>
+        <div class="stat-label">Games Played</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value wpm" id="stat-avg-wpm">0</div>
+        <div class="stat-label">Average WPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value best" id="stat-best-wpm">0</div>
+        <div class="stat-label">Best WPM</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value streak" id="stat-streak">0</div>
+        <div class="stat-label">Current Streak</div>
+      </div>
+    </div>
+
+    <!-- Streak Heatmap -->
+    <div class="streak-section">
+      <div class="section-header-row">
+        <h2>Activity</h2>
+        <div class="year-selector">
+          <button id="prev-year" class="year-btn">&lt;</button>
+          <span id="current-year">2025</span>
+          <button id="next-year" class="year-btn">&gt;</button>
+        </div>
+      </div>
+      <div class="streak-stats">
+        <span><strong id="total-games-year">0</strong> games this year</span>
+        <span><strong id="active-days">0</strong> active days</span>
+        <span>Longest streak: <strong id="longest-streak">0</strong> days</span>
+      </div>
+      <div id="streak-heatmap" class="streak-heatmap"></div>
+      <div class="streak-legend">
+        <span class="legend-label">Less</span>
+        <div class="legend-box level-0"></div>
+        <div class="legend-box level-1"></div>
+        <div class="legend-box level-2"></div>
+        <div class="legend-box level-3"></div>
+        <div class="legend-box level-4"></div>
+        <span class="legend-label">More</span>
+      </div>
+    </div>
+
+    <!-- Recent Games -->
+    <div class="recent-games-section">
+      <h2>Recent Games</h2>
+      <div id="recent-games" class="recent-games-list">
+        <p class="no-games">No games played yet. Open the extension and start typing!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, inMemoryPersistence } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+  const firebaseConfig = window.FIREBASE_CONFIG || {
+    apiKey: "",
+    authDomain: "",
+    projectId: "",
+  };
+
+  const API_BASE = window.API_BASE || 'https://codetype-api.thisisnsh.workers.dev';
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  setPersistence(auth, inMemoryPersistence);
+
+  const loadingEl = document.getElementById('dashboard-loading');
+  const authEl = document.getElementById('dashboard-auth');
+  const contentEl = document.getElementById('dashboard-content');
+
+  let currentYear = new Date().getFullYear();
+  let currentUser = null;
+  let streakData = {};
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      currentUser = user;
+      await loadDashboard(user);
+    } else {
+      loadingEl.style.display = 'none';
+      authEl.style.display = 'block';
+    }
+  });
+
+  async function loadDashboard(user) {
+    try {
+      // Update profile
+      document.getElementById('profile-photo').src = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || user.email);
+      document.getElementById('profile-name').textContent = user.displayName || user.email.split('@')[0];
+      document.getElementById('profile-email').textContent = user.email;
+
+      const token = await user.getIdToken();
+
+      // Fetch user stats
+      const statsResponse = await fetch(`${API_BASE}/users/${user.uid}/stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (statsResponse.ok) {
+        const data = await statsResponse.json();
+        document.getElementById('stat-games').textContent = data.user.totalGamesPlayed || 0;
+        document.getElementById('stat-avg-wpm').textContent = data.user.avgWpm || 0;
+        document.getElementById('stat-best-wpm').textContent = data.user.bestWpm || 0;
+        document.getElementById('stat-streak').textContent = data.user.currentStreak || 0;
+
+        // Render recent games
+        renderRecentGames(data.recentGames || []);
+      }
+
+      // Fetch streak data
+      await loadStreakData(user.uid, token, currentYear);
+
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    } catch (error) {
+      console.error('Failed to load dashboard:', error);
+      loadingEl.style.display = 'none';
+      contentEl.style.display = 'block';
+    }
+  }
+
+  async function loadStreakData(uid, token, year) {
+    try {
+      const response = await fetch(`${API_BASE}/users/${uid}/streaks?year=${year}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        streakData = await response.json();
+        document.getElementById('longest-streak').textContent = streakData.longestStreak || 0;
+        document.getElementById('active-days').textContent = streakData.totalActiveDays || 0;
+
+        // Calculate total games this year
+        let totalGames = 0;
+        for (const activity of Object.values(streakData.activities || {})) {
+          totalGames += activity.gamesPlayed || 0;
+        }
+        document.getElementById('total-games-year').textContent = totalGames;
+
+        renderStreakHeatmap(year, streakData.activities || {});
+      }
+    } catch (error) {
+      console.error('Failed to load streak data:', error);
+    }
+  }
+
+  function renderStreakHeatmap(year, activities) {
+    const container = document.getElementById('streak-heatmap');
+    container.innerHTML = '';
+
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31);
+
+    // Create month labels
+    const monthLabels = document.createElement('div');
+    monthLabels.className = 'month-labels';
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    months.forEach(month => {
+      const label = document.createElement('span');
+      label.textContent = month;
+      monthLabels.appendChild(label);
+    });
+    container.appendChild(monthLabels);
+
+    // Create grid
+    const grid = document.createElement('div');
+    grid.className = 'heatmap-grid';
+
+    // Day labels
+    const dayLabels = document.createElement('div');
+    dayLabels.className = 'day-labels';
+    ['', 'Mon', '', 'Wed', '', 'Fri', ''].forEach(day => {
+      const label = document.createElement('span');
+      label.textContent = day;
+      dayLabels.appendChild(label);
+    });
+    grid.appendChild(dayLabels);
+
+    // Weeks container
+    const weeksContainer = document.createElement('div');
+    weeksContainer.className = 'weeks-container';
+
+    // Find the first Sunday before or on Jan 1
+    const firstDay = new Date(startDate);
+    firstDay.setDate(firstDay.getDate() - firstDay.getDay());
+
+    let currentDate = new Date(firstDay);
+    let weekEl = null;
+
+    while (currentDate <= endDate || currentDate.getDay() !== 0) {
+      if (currentDate.getDay() === 0) {
+        weekEl = document.createElement('div');
+        weekEl.className = 'week';
+        weeksContainer.appendChild(weekEl);
+      }
+
+      const dayEl = document.createElement('div');
+      dayEl.className = 'day';
+
+      const dateStr = currentDate.toISOString().split('T')[0];
+      const activity = activities[dateStr];
+      const gamesPlayed = activity?.gamesPlayed || 0;
+
+      // Determine level
+      let level = 0;
+      if (gamesPlayed >= 10) level = 4;
+      else if (gamesPlayed >= 6) level = 3;
+      else if (gamesPlayed >= 3) level = 2;
+      else if (gamesPlayed >= 1) level = 1;
+
+      dayEl.classList.add(`level-${level}`);
+
+      // Add tooltip
+      if (currentDate.getFullYear() === year) {
+        const dateFormatted = currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        dayEl.title = `${dateFormatted}: ${gamesPlayed} game${gamesPlayed !== 1 ? 's' : ''}`;
+      } else {
+        dayEl.classList.add('outside');
+      }
+
+      weekEl.appendChild(dayEl);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    grid.appendChild(weeksContainer);
+    container.appendChild(grid);
+  }
+
+  function renderRecentGames(games) {
+    const container = document.getElementById('recent-games');
+
+    if (games.length === 0) {
+      container.innerHTML = '<p class="no-games">No games played yet. Open the extension and start typing!</p>';
+      return;
+    }
+
+    container.innerHTML = games.map(game => {
+      const date = new Date(game.playedAt);
+      const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+      return `
+        <div class="game-item">
+          <div class="game-stats">
+            <span class="game-wpm">${game.wpm} WPM</span>
+            <span class="game-accuracy">${game.accuracy}% accuracy</span>
+          </div>
+          <div class="game-meta">
+            <span class="game-date">${dateStr} at ${timeStr}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Year navigation
+  document.getElementById('current-year').textContent = currentYear;
+
+  document.getElementById('prev-year').addEventListener('click', async () => {
+    currentYear--;
+    document.getElementById('current-year').textContent = currentYear;
+    if (currentUser) {
+      const token = await currentUser.getIdToken();
+      await loadStreakData(currentUser.uid, token, currentYear);
+    }
+  });
+
+  document.getElementById('next-year').addEventListener('click', async () => {
+    if (currentYear < new Date().getFullYear()) {
+      currentYear++;
+      document.getElementById('current-year').textContent = currentYear;
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        await loadStreakData(currentUser.uid, token, currentYear);
+      }
+    }
+  });
+
+  // Sign out
+  document.getElementById('signout-btn').addEventListener('click', async () => {
+    await signOut(auth);
+    window.location.href = '/';
+  });
+</script>
+
+
+          <footer class="footer">
+            <div class="footer-content">
+              <div class="footer-brand">
+                <div class="footer-logo">
+                  <svg class="footer-logo-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                  </svg>
+                  CodeType
+                </div>
+                <span class="footer-tagline">Typing game for developers.</span>
+              </div>
+              <nav class="footer-nav" aria-label="Footer">
+                <a href="https://github.com/thisisnsh/codetype">GitHub</a>
+                <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE">MIT License</a>
+                <a href="/privacy/">Privacy Policy</a>
+              </nav>
+              <div class="footer-actions">
+                <a href="https://github.com/thisisnsh/codetype" class="btn btn-primary footer-star-button">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l2.47 5.01 5.53.8-4 3.9.95 5.52L12 14.98 7.05 17.23 8 11.71l-4-3.9 5.53-.8L12 2z"/>
+                  </svg>
+                  Star on GitHub
+                </a>
+              </div>
+            </div>
+            <div class="footer-bottom">
+              <span>Copyright 2026 Nishant Hada</span>
+            </div>
+          </footer>
+        </div>
+      </main>
+    </div>
+
+    <div class="sidebar-overlay" data-sidebar-overlay></div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div class="status-left">
+        <span class="status-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V7z"/>
+            <polyline points="14 2 14 8 20 8"/>
+          </svg>
+          main
+        </span>
+        <span class="status-item">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          0 errors
+        </span>
+      </div>
+      <div class="status-right">
+        <span class="status-item">TypeScript</span>
+        <span class="status-item">UTF-8</span>
+        <span class="status-item">Ln 1, Col 1</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/assets/js/main.js"></script>
+</body>
+</html>
