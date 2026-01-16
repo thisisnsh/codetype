@@ -60,7 +60,6 @@ code, .code-font {
   height: 30px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
   padding: 0 10px;
   border-bottom: 1px solid var(--vscode-border);
   user-select: none;
@@ -84,6 +83,7 @@ code, .code-font {
 .titlebar-title {
   font-size: 13px;
   color: var(--vscode-text-muted);
+  margin-left: 16px;
 }
 
 .titlebar-actions {
@@ -1132,6 +1132,20 @@ code, .code-font {
 
   .policy-page {
     padding: 32px 20px 60px;
+  }
+
+  .status-left .status-item:nth-child(n + 3),
+  .status-right .status-item:nth-child(2) {
+    display: none;
+  }
+
+  .status-left .status-item svg {
+    display: none;
+  }
+
+  .status-left,
+  .status-right {
+    gap: 0;
   }
 }
 
