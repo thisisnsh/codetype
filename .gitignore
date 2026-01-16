@@ -13,3 +13,6 @@ codetype-website/_site/
 # General
 *.log
 .DS_Store
+
+# Claude
+.claude/
