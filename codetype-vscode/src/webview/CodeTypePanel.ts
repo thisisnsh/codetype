@@ -449,28 +449,27 @@ export class CodeTypePanel {
             display: flex;
             align-items: flex-start;
             justify-content: center;
-            padding: 10vh 40px 48px;
+            padding: 15vh 40px 48px;
             overflow-y: auto;
         }
 
         .welcome-container {
             width: 100%;
-            max-width: 1000px;
+            max-width: 700px;
             display: flex;
             flex-direction: column;
-            gap: 32px;
+            gap: 24px;
         }
 
         .welcome-header {
             display: flex;
             flex-direction: column;
-            gap: 6px;
-            text-align: center;
+            gap: 4px;
         }
 
         .welcome-title {
-            font-size: 26px;
-            font-weight: 200;
+            font-size: 28px;
+            font-weight: 300;
             color: var(--vscode-foreground);
             letter-spacing: -0.5px;
         }
@@ -483,30 +482,27 @@ export class CodeTypePanel {
 
         .welcome-grid {
             display: grid;
-            grid-template-columns: repeat(3, minmax(200px, 280px));
+            grid-template-columns: 1fr 1fr;
             gap: 48px;
-            justify-content: center;
         }
 
         .welcome-column {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
             min-width: 0;
         }
 
         .welcome-section {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .welcome-section-title {
-            font-size: 11px;
-            font-weight: 600;
+            font-size: 13px;
+            font-weight: 400;
             color: var(--vscode-foreground);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
         }
 
         .start-links {
@@ -665,14 +661,11 @@ export class CodeTypePanel {
         .welcome-footer {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 16px;
+            gap: 12px;
             flex-wrap: wrap;
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 16px;
-            padding-top: 24px;
-            border-top: 1px solid var(--vscode-widget-border, var(--vscode-panel-border));
+            margin-top: 32px;
         }
 
         .welcome-footer a,
@@ -694,25 +687,17 @@ export class CodeTypePanel {
 
         .footer-separator {
             color: var(--vscode-descriptionForeground);
-            opacity: 0.5;
-        }
-
-        @media (max-width: 900px) {
-            .welcome-shell {
-                padding: 5vh 24px 40px;
-            }
-
-            .welcome-grid {
-                grid-template-columns: repeat(2, minmax(180px, 280px));
-                gap: 32px;
-            }
+            opacity: 0.4;
         }
 
         @media (max-width: 600px) {
+            .welcome-shell {
+                padding: 10vh 24px 40px;
+            }
+
             .welcome-grid {
                 grid-template-columns: 1fr;
-                gap: 24px;
-                max-width: 300px;
+                gap: 32px;
             }
         }
 
@@ -1197,13 +1182,19 @@ export class CodeTypePanel {
                                         </button>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="welcome-column">
                                 <div class="welcome-section">
                                     <div class="welcome-section-title">Recent</div>
                                     <div class="recent-list">
                                         \${recentHtml}
                                     </div>
+                                </div>
+                                <div class="welcome-footer">
+                                    \${isAuthenticated && user
+                                        ? \`<span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button><span class="footer-separator">·</span>\`
+                                        : ''}
+                                    <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">GitHub</a>
+                                    <span class="footer-separator">·</span>
+                                    <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
                                 </div>
                             </div>
                             <div class="welcome-column">
@@ -1240,16 +1231,6 @@ export class CodeTypePanel {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="welcome-footer">
-                            \${isAuthenticated && user
-                                ? \`<span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button><span class="footer-separator">·</span>\`
-                                : ''}
-                            <span>Created by Nishant Hada</span>
-                            <span class="footer-separator">·</span>
-                            <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">GitHub</a>
-                            <span class="footer-separator">·</span>
-                            <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
                         </div>
                     </div>
                 </div>

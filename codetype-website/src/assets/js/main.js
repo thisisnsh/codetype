@@ -408,6 +408,91 @@ function initSidebarToggle() {
   });
 }
 
+// Breadcrumb and Tab updater
+function initBreadcrumbUpdater() {
+  const breadcrumb = document.querySelector('.breadcrumb');
+  const tabName = document.querySelector('.tab.active span:not(.tab-close)');
+  const fileItems = document.querySelectorAll('.file-item');
+  const activityIcons = document.querySelectorAll('.activity-icon');
+
+  if (!breadcrumb) return;
+
+  // Map hrefs to breadcrumb labels
+  const breadcrumbMap = {
+    '/': { crumbs: [{ label: 'codetype', href: '/' }], tab: 'codetype' },
+    '/#hero': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'welcome.ts', href: '/#hero' }], tab: 'welcome.ts' },
+    '/#features': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'features.ts', href: '/#features' }], tab: 'features.ts' },
+    '/#download': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'config.json', href: '/#download' }], tab: 'config.json' },
+    '/#opensource': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'README.md', href: '/#opensource' }], tab: 'README.md' },
+    '/#faq': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'faq.ts', href: '/#faq' }], tab: 'faq.ts' },
+    '/dashboard/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'dashboard.ts', href: '/dashboard/' }], tab: 'dashboard.ts' },
+    '/leaderboard/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'leaderboard.ts', href: '/leaderboard/' }], tab: 'leaderboard.ts' },
+    '/auth/login/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'login.json', href: '/auth/login/' }], tab: 'login.json' },
+    '/privacy/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'privacy.md', href: '/privacy/' }], tab: 'privacy.md' }
+  };
+
+  const updateBreadcrumb = (href) => {
+    // Normalize href
+    const normalizedHref = href.replace(window.location.origin, '');
+    const mapping = breadcrumbMap[normalizedHref] || breadcrumbMap['/#hero'];
+
+    if (!mapping) return;
+
+    // Update breadcrumb HTML
+    let html = '';
+    mapping.crumbs.forEach((crumb, index) => {
+      if (index > 0) {
+        html += '<span class="breadcrumb-separator" aria-hidden="true">&gt;</span>';
+      }
+      const ariaCurrent = index === mapping.crumbs.length - 1 ? ' aria-current="page"' : '';
+      html += `<a href="${crumb.href}" class="breadcrumb-link"${ariaCurrent}>${crumb.label}</a>`;
+    });
+    breadcrumb.innerHTML = html;
+
+    // Update tab name
+    if (tabName) {
+      tabName.textContent = mapping.tab;
+    }
+
+    // Update active state on file items
+    fileItems.forEach(item => {
+      const itemHref = item.getAttribute('href');
+      if (itemHref === normalizedHref || itemHref === href) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  };
+
+  // Add click handlers to file items
+  fileItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      const href = item.getAttribute('href');
+      updateBreadcrumb(href);
+    });
+  });
+
+  // Add click handlers to activity icons
+  activityIcons.forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      const href = icon.getAttribute('href');
+      updateBreadcrumb(href);
+    });
+  });
+
+  // Update on hash change
+  window.addEventListener('hashchange', () => {
+    updateBreadcrumb(window.location.pathname + window.location.hash);
+  });
+
+  // Set initial breadcrumb based on current URL
+  const initialHref = window.location.pathname + window.location.hash;
+  if (breadcrumbMap[initialHref]) {
+    updateBreadcrumb(initialHref);
+  }
+}
+
 // Initialize everything
 document.addEventListener('DOMContentLoaded', () => {
   new TypingDemo();
@@ -416,6 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initActivityBar();
   initScrollAnimations();
   initSidebarToggle();
+  initBreadcrumbUpdater();
 });
 
 // Click outside to deactivate typing demo

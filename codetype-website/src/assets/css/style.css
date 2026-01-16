@@ -235,7 +235,7 @@ code, .code-font {
   height: 34px;
   margin-left: 8px;
   border-radius: 6px;
-  border: 1px solid var(--vscode-border);
+  border: none;
   background: transparent;
   color: var(--vscode-text-muted);
   cursor: pointer;
@@ -335,6 +335,17 @@ code, .code-font {
   flex: 1;
   overflow-y: auto;
   position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.editor-content > *:not(.footer) {
+  flex-shrink: 0;
+}
+
+.editor-content > .footer {
+  margin-top: auto;
 }
 
 .editor-scroll {
@@ -903,100 +914,114 @@ code, .code-font {
 .footer {
   background: var(--vscode-sidebar);
   border-top: 1px solid var(--vscode-border);
-  padding: 16px 32px 12px;
+  padding: 40px 32px 24px;
   flex-shrink: 0;
 }
 
 .footer-content {
-  max-width: 1200px;
+  max-width: 1000px;
   margin: 0 auto;
+}
+
+.footer-main {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
   justify-content: space-between;
-  gap: 16px 32px;
+  gap: 48px;
+  margin-bottom: 32px;
 }
 
 .footer-brand {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 220px;
+  flex: 1;
+  max-width: 320px;
 }
 
 .footer-logo {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: var(--vscode-text);
 }
 
 .footer-logo-icon {
-  width: 20px;
-  height: 20px;
-  color: var(--vscode-accent);
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .footer-tagline {
   color: var(--vscode-text-muted);
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
 }
 
-.footer-nav {
+.footer-links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  font-size: 13px;
+  gap: 64px;
 }
 
-.footer-nav a {
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.footer-column h4 {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--vscode-text);
+  margin: 0 0 6px 0;
+}
+
+.footer-column a {
   color: var(--vscode-text-muted);
   text-decoration: none;
+  font-size: 14px;
   transition: color 0.2s;
 }
 
-.footer-nav a:visited {
+.footer-column a:visited {
   color: var(--vscode-text-muted);
 }
 
-.footer-nav a:hover {
-  color: var(--vscode-text);
-}
-
-.footer-actions {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.footer-star-button {
-  padding: 8px 16px;
-  font-size: 13px;
-}
-
-.footer-star-badge {
-  display: inline-flex;
-  align-items: center;
-}
-
-.footer-star-badge img {
-  height: 20px;
-  display: block;
+.footer-column a:hover {
+  color: var(--vscode-accent);
 }
 
 .footer-bottom {
-  max-width: 1200px;
-  margin: 10px auto 0;
-  padding-top: 8px;
+  padding-top: 24px;
   border-top: 1px solid var(--vscode-border);
   display: flex;
-  justify-content: center;
-  text-align: center;
-  font-size: 12px;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
   color: var(--vscode-text-muted);
+}
+
+.footer-copyright {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footer-heart {
+  color: var(--vscode-red);
+}
+
+.footer-github-link {
+  color: var(--vscode-text-muted);
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.footer-github-link:hover {
+  color: var(--vscode-text);
 }
 
 /* Status Bar (Footer bar like VSCode) */
@@ -1055,9 +1080,17 @@ code, .code-font {
     display: none;
   }
 
-  .footer-content {
+  .footer-main {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 32px;
+  }
+
+  .footer-brand {
+    max-width: 100%;
+  }
+
+  .footer-links {
+    gap: 40px;
   }
 
   .sidebar {
@@ -1114,13 +1147,18 @@ code, .code-font {
     font-size: 32px;
   }
 
-  .footer-content {
-    gap: 12px;
+  .footer {
+    padding: 32px 20px 20px;
+  }
+
+  .footer-links {
+    flex-direction: column;
+    gap: 24px;
   }
 
   .footer-bottom {
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
     text-align: center;
   }
 
