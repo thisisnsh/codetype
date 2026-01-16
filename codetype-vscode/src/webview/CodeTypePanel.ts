@@ -579,7 +579,7 @@ export class CodeTypePanel {
         .streak-controls {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             margin-bottom: 8px;
         }
 
@@ -588,7 +588,7 @@ export class CodeTypePanel {
             color: var(--vscode-foreground);
             border: none;
             font-family: inherit;
-            font-size: 16px;
+            font-size: 14px;
             padding: 0;
             cursor: pointer;
             appearance: none;
