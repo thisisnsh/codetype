@@ -380,6 +380,8 @@ function initSidebarToggle() {
 function initBreadcrumbUpdater() {
   const breadcrumb = document.querySelector('.breadcrumb');
   const tabName = document.querySelector('.tab.active span:not(.tab-close)');
+  const tabIcon = document.querySelector('.tab.active .tab-icon');
+  const tabIconText = tabIcon ? tabIcon.querySelector('.tab-icon-text') : null;
   const statusFilename = document.querySelector('.status-filename');
   const statusLanguage = document.querySelector('.status-language');
   const fileItems = document.querySelectorAll('.file-item');
@@ -398,6 +400,15 @@ function initBreadcrumbUpdater() {
       return `${path}/`;
     }
     return path;
+  };
+
+  const getIconMeta = (tabLabel) => {
+    if (!tabLabel) return null;
+    const lower = tabLabel.toLowerCase();
+    if (lower.endsWith('.ts')) return { type: 'ts', label: 'TS' };
+    if (lower.endsWith('.json')) return { type: 'json', label: '{}' };
+    if (lower.endsWith('.md')) return { type: 'md', label: 'MD' };
+    return null;
   };
 
   // Map hrefs to breadcrumb labels
@@ -435,11 +446,6 @@ function initBreadcrumbUpdater() {
     '/dashboard/': {
       crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'dashboard.ts', href: '/dashboard/' }],
       tab: 'dashboard.ts',
-      language: 'TypeScript'
-    },
-    '/leaderboard/': {
-      crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'leaderboard.ts', href: '/leaderboard/' }],
-      tab: 'leaderboard.ts',
       language: 'TypeScript'
     },
     '/auth/login/': {
@@ -500,6 +506,16 @@ function initBreadcrumbUpdater() {
     // Update tab name
     if (tabName) {
       tabName.textContent = mapping.tab;
+    }
+    if (tabIcon) {
+      const iconMeta = getIconMeta(mapping.tab);
+      tabIcon.classList.remove('ts', 'json', 'md');
+      if (iconMeta) {
+        tabIcon.classList.add(iconMeta.type);
+        if (tabIconText) {
+          tabIconText.textContent = iconMeta.label;
+        }
+      }
     }
     if (statusFilename) {
       statusFilename.textContent = mapping.tab;

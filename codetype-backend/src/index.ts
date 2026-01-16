@@ -10,7 +10,6 @@ import type {
   SubmitGameResponse,
   UserStatsResponse,
   StreaksResponse,
-  LeaderboardEntry,
 } from './types';
 
 import {
@@ -460,8 +459,6 @@ export default {
         const { currentStreak } = await updateStreak(env, authUser.uid, today);
         await updateActivity(env, authUser.uid, today, body.wpm);
 
-        await updateLeaderboards(env, authUser.uid, user.username, body.wpm, user.photoURL);
-
         const response: SubmitGameResponse = {
           success: true,
           gameId,
@@ -534,15 +531,7 @@ export default {
         stats.lastPlayed = Date.now();
 
         await env.CODETYPE_KV.put(userStatsKey, JSON.stringify(stats));
-        await updateLeaderboards(env, userId, username, wpm);
-
         return jsonResponse(request, env, { success: true });
-      }
-
-      if (path === '/leaderboard' && request.method === 'GET') {
-        const timeframe = url.searchParams.get('timeframe') || 'weekly';
-        const leaderboard = await getLeaderboard(env, timeframe);
-        return jsonResponse(request, env, leaderboard);
       }
 
       if (path === '/rooms' && request.method === 'POST') {
@@ -609,113 +598,6 @@ export default {
     }
   },
 };
-
-async function updateLeaderboards(
-  env: Env,
-  userId: string,
-  username: string,
-  wpm: number,
-  photoURL?: string
-) {
-  const today = new Date().toISOString().split('T')[0];
-  const weekStart = getWeekStart();
-
-  await updateLeaderboardEntry(
-    env,
-    `leaderboard:daily:${today}`,
-    userId,
-    username,
-    wpm,
-    photoURL,
-    60 * 60 * 48
-  );
-
-  await updateLeaderboardEntry(
-    env,
-    `leaderboard:weekly:${weekStart}`,
-    userId,
-    username,
-    wpm,
-    photoURL,
-    60 * 60 * 24 * 8
-  );
-
-  await updateLeaderboardEntry(env, 'leaderboard:alltime', userId, username, wpm, photoURL);
-}
-
-async function updateLeaderboardEntry(
-  env: Env,
-  key: string,
-  userId: string,
-  username: string,
-  wpm: number,
-  photoURL?: string,
-  expirationTtl?: number
-) {
-  const existing = await env.CODETYPE_KV.get(key);
-  const leaderboard: Record<
-    string,
-    { username: string; scores: number[]; avgWpm: number; bestWpm: number; photoURL?: string }
-  > = existing ? JSON.parse(existing) : {};
-
-  if (!leaderboard[userId]) {
-    leaderboard[userId] = { username, scores: [], avgWpm: 0, bestWpm: 0 };
-  }
-
-  leaderboard[userId].username = username;
-  leaderboard[userId].scores.push(wpm);
-  leaderboard[userId].bestWpm = Math.max(leaderboard[userId].bestWpm, wpm);
-  leaderboard[userId].avgWpm = Math.round(
-    leaderboard[userId].scores.reduce((a, b) => a + b, 0) / leaderboard[userId].scores.length
-  );
-  if (photoURL) {
-    leaderboard[userId].photoURL = photoURL;
-  }
-
-  const options: KVNamespacePutOptions = expirationTtl ? { expirationTtl } : {};
-  await env.CODETYPE_KV.put(key, JSON.stringify(leaderboard), options);
-}
-
-async function getLeaderboard(env: Env, timeframe: string): Promise<LeaderboardEntry[]> {
-  let key: string;
-
-  switch (timeframe) {
-    case 'daily':
-      key = `leaderboard:daily:${new Date().toISOString().split('T')[0]}`;
-      break;
-    case 'weekly':
-      key = `leaderboard:weekly:${getWeekStart()}`;
-      break;
-    default:
-      key = 'leaderboard:alltime';
-  }
-
-  const data = await env.CODETYPE_KV.get(key);
-  if (!data) return [];
-
-  const leaderboard = JSON.parse(data);
-  return Object.entries(leaderboard)
-    .map(([userId, entry]: [string, any], index) => ({
-      rank: index + 1,
-      userId,
-      username: entry.username,
-      photoURL: entry.photoURL,
-      avgWpm: entry.avgWpm,
-      bestWpm: entry.bestWpm,
-      gamesPlayed: entry.scores.length,
-    }))
-    .sort((a, b) => b.avgWpm - a.avgWpm)
-    .map((entry, index) => ({ ...entry, rank: index + 1 }))
-    .slice(0, 100);
-}
-
-function getWeekStart(): string {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const diff = now.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-  const monday = new Date(now.setDate(diff));
-  return monday.toISOString().split('T')[0];
-}
 
 export class GameRoom {
   private state: DurableObjectState;

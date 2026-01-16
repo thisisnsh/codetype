@@ -28,7 +28,7 @@ FIREBASE_API_KEY = "your-firebase-api-key"
 # Set FIREBASE_JWT_CERTS secret via: wrangler secret put FIREBASE_JWT_CERTS
 # The secret should be a JSON map of key ID to PEM certificate
 
-# KV namespace for leaderboards and user data
+# KV namespace for user data
 [[kv_namespaces]]
 binding = "CODETYPE_KV"
 id = "your-kv-namespace-id"  # Replace after creating with: wrangler kv:namespace create CODETYPE_KV

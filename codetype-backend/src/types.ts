@@ -98,16 +98,6 @@ export interface StreaksResponse {
   totalActiveDays: number;
 }
 
-export interface LeaderboardEntry {
-  rank: number;
-  userId: string;
-  username: string;
-  photoURL?: string;
-  avgWpm: number;
-  bestWpm: number;
-  gamesPlayed: number;
-}
-
 // Firebase config type
 export interface FirebaseConfig {
   projectId: string;
