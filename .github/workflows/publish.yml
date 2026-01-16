@@ -36,6 +36,40 @@ jobs:
         env:
           DISPLAY: ':99.0'
 
+      - name: Bump extension version
+        run: |
+          node - <<'NODE'
+          const cp = require('child_process');
+
+          let latest = '0.0.0';
+          try {
+            const out = cp.execSync('vsce show thisisnsh.codetype --json', {
+              encoding: 'utf8',
+            });
+            const data = JSON.parse(out);
+            const versions = (data.versions || []).map((v) => v.version);
+            const compare = (a, b) => {
+              const pa = a.split('.').map((n) => parseInt(n, 10) || 0);
+              const pb = b.split('.').map((n) => parseInt(n, 10) || 0);
+              for (let i = 0; i < 3; i += 1) {
+                if (pa[i] !== pb[i]) return pa[i] - pb[i];
+              }
+              return 0;
+            };
+            versions.sort(compare);
+            if (versions.length) {
+              latest = versions[versions.length - 1];
+            }
+          } catch (error) {
+            console.log('No published version found, starting from 0.0.0.');
+          }
+
+          const parts = latest.split('.').map((n) => parseInt(n, 10) || 0);
+          const next = [parts[0], parts[1], parts[2] + 1].join('.');
+          console.log(`Bumping extension version from ${latest} to ${next}`);
+          cp.execSync(`npm version ${next} --no-git-tag-version`, { stdio: 'inherit' });
+          NODE
+
       - name: Publish to VS Code Marketplace
         run: vsce publish -p ${{ secrets.VSCE_PAT }}
         env:
