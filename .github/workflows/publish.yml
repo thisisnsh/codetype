@@ -46,7 +46,7 @@ jobs:
     needs: publish
     defaults:
       run:
-        working-directory: codetype-vscode/worker
+        working-directory: codetype-backend
 
     steps:
       - name: Checkout repository
@@ -58,7 +58,7 @@ jobs:
           node-version: 20.x
 
       - name: Install worker dependencies
-        run: npm ci
+        run: npm install
 
       - name: Deploy Cloudflare Worker
         run: npx wrangler deploy
@@ -68,6 +68,8 @@ jobs:
   deploy-website:
     runs-on: ubuntu-latest
     needs: publish
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: codetype-website
