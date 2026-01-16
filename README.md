@@ -1,131 +1,47 @@
 # CodeType
 
 <p align="center">
-  <strong>Speed typing competition disguised as normal coding.</strong><br>
-  Play solo or with friends while looking productive.
-</p>
-
-<p align="center">
-  <a href="#why-codetype">Why CodeType?</a> •
-  <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#project-structure">Project Structure</a> •
-  <a href="#contributing">Contributing</a>
+  <strong>Type code for fun while vibe coding.</strong><br>
+  A VS Code game that looks like a normal tab and keeps score.
 </p>
 
 ---
 
 ## Why CodeType?
 
-**Perfect for vibe coding sessions.** When you're waiting for AI to generate code, or sitting through a long build, look busy while actually improving your typing speed. The game opens as a normal file tab (like `solo.ts` or `team.ts`) - your colleagues will never know.
+CodeType turns real code into a fast, playful game inside VS Code. It opens as a normal-looking file tab (like `solo.ts` or `team.ts`) so you can squeeze in a round during vibe coding sessions without leaving your editor.
 
 ## Features
 
-- **Stealth Mode**: Opens as a regular editor tab with mode-based names (like "solo.ts", "stats.ts", or "team.ts")
-- **Real Code**: Type actual code snippets from your workspace or curated samples
-- **Solo Mode**: Play a typing game with instant WPM tracking (works offline!)
-- **Multiplayer**: Create rooms and compete with friends via invite codes
-- **Leaderboards**: Daily, weekly, and all-time rankings
-- **Stats Tracking**: Personal best, average WPM, games played
-- **Keyboard Shortcut**: Quick launch with `Cmd+Shift+T` / `Ctrl+Shift+T`
+- Stealth tab names and editor-like UI
+- Real code snippets from your workspace or curated samples
+- Solo and Team rooms with invite codes
+- Local stats, streaks, and best WPM; sign in to sync and rank globally
+- Themes and optional typing sounds
+- Quick launch with `Cmd+Shift+T` / `Ctrl+Shift+T`
 
-## Installation
+## Install
 
-### From VS Code Marketplace
-
-1. Open VS Code
-2. Go to Extensions (`Cmd+Shift+X` / `Ctrl+Shift+X`)
-3. Search for "CodeType"
-4. Click Install
-
-### From Source
+- VS Code Marketplace: search for "CodeType" and install
+- Command line:
 
 ```bash
-git clone https://github.com/yourusername/codetype.git
-cd codetype/codetype-vscode
-npm install
-npm run compile
+code --install-extension codetype.codetype
 ```
 
-Press `F5` to launch the Extension Development Host.
+## Play
 
-## Project Structure
-
-This monorepo contains:
-
-```
-codetype/
-├── codetype-vscode/      # VS Code extension
-│   ├── src/              # Extension source code
-│   └── package.json
-├── codetype-backend/     # Cloudflare Worker backend
-│   ├── src/              # Worker source code
-│   └── package.json
-├── codetype-website/     # Promotional website
-│   ├── src/              # Eleventy source files
-│   └── package.json
-├── README.md             # This file
-├── LICENSE               # MIT License
-├── CONTRIBUTING.md       # Contribution guidelines
-├── CODE_OF_CONDUCT.md    # Community guidelines
-└── SECURITY.md           # Security policy
-```
-
-### VS Code Extension
-
-The main extension lives in `codetype-vscode/`. See [codetype-vscode/CHANGELOG.md](codetype-vscode/CHANGELOG.md) for version history.
-
-### Website
-
-The promotional website is in `codetype-website/`. Built with Eleventy and designed to look like VS Code.
-
-To run locally:
-```bash
-cd codetype-website
-npm install
-npm start
-```
+1. Open the Command Palette and run `CodeType: Play Game`.
+2. Choose Solo or Team.
+3. Type the snippet and chase higher WPM and accuracy.
 
 ## Scoring
 
-- **WPM (Words Per Minute)**: Characters typed ÷ 5 ÷ minutes elapsed
-- **Accuracy**: Correct keystrokes ÷ total keystrokes × 100
-
-### Rank Titles
-
-| WPM | Rank |
-|-----|------|
-| 150+ | Legendary |
-| 120-149 | Master |
-| 100-119 | Expert |
-| 80-99 | Advanced |
-| 60-79 | Intermediate |
-| 40-59 | Beginner |
-| 0-39 | Novice |
-
-## Contributing
-
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## Acknowledgments
-
-- Inspired by [MonkeyType](https://monkeytype.com/) and [TypeRacer](https://play.typeracer.com/)
-- Built with [VS Code Extension API](https://code.visualstudio.com/api)
-- Backend powered by [Cloudflare Workers](https://workers.cloudflare.com/)
-- Website built with [Eleventy](https://www.11ty.dev/)
+- WPM: characters typed / 5 / minutes elapsed
+- Accuracy: correct keystrokes / total keystrokes
 
 ---
 
 <p align="center">
-  Made with caution by developers who just want to look busy.
+  Built for developers who want a fast game between builds.
 </p>
