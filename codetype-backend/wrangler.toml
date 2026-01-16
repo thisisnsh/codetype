@@ -20,15 +20,8 @@ FIREBASE_API_KEY = "your-firebase-api-key"
 # ALLOWED_ORIGINS = "https://codetype.ai"
 # Optional: rate limit per minute per IP
 # RATE_LIMIT_PER_MINUTE = "120"
-# Optional: enable legacy anonymous scores
-# ALLOW_ANON_SCORES = "false"
 # Set FIREBASE_CONFIG secret via: wrangler secret put FIREBASE_CONFIG
 # The secret should be a JSON string with the Firebase config plus serviceAccount:
 # {"projectId":"...","apiKey":"...","authDomain":"...","appId":"...","serviceAccount":{"client_email":"...","private_key":"..."}}
 # Set FIREBASE_JWT_CERTS secret via: wrangler secret put FIREBASE_JWT_CERTS
 # The secret should be a JSON map of key ID to PEM certificate
-
-# KV namespace for user data
-[[kv_namespaces]]
-binding = "CODETYPE_KV"
-id = "your-kv-namespace-id"  # Replace after creating with: wrangler kv:namespace create CODETYPE_KV
