@@ -23,12 +23,20 @@ import {
   updateActivity,
   getYearActivity,
   isUsernameAvailable,
+  createRoom,
+  isRoomCodeTaken,
 } from './firebase';
+
+import type { RoomDocument } from './types';
 
 export type { Env };
 
 const allowedMethods = 'GET, POST, PUT, DELETE, OPTIONS';
 const allowedHeaders = 'Content-Type, Authorization';
+
+// In-memory rate limiting
+const rateLimitMap = new Map<string, { count: number; windowStart: number }>();
+const RATE_LIMIT_WINDOW_MS = 60000; // 1 minute
 
 function getAllowedOrigins(env: Env): string[] {
   if (!env.ALLOWED_ORIGINS) {
@@ -160,21 +168,28 @@ async function getAuthUser(request: Request, env: Env): Promise<DecodedToken | n
   }
 }
 
-async function enforceRateLimit(
-  env: Env,
+function enforceRateLimit(
   request: Request,
   bucket: string,
   limit: number
-): Promise<boolean> {
+): boolean {
   const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
-  const windowKey = Math.floor(Date.now() / 60000);
-  const key = `ratelimit:${bucket}:${ip}:${windowKey}`;
-  const currentRaw = await env.CODETYPE_KV.get(key);
-  const current = currentRaw ? parseInt(currentRaw, 10) : 0;
-  if (current >= limit) {
+  const key = `${bucket}:${ip}`;
+  const now = Date.now();
+
+  const entry = rateLimitMap.get(key);
+
+  if (!entry || now - entry.windowStart >= RATE_LIMIT_WINDOW_MS) {
+    // New window
+    rateLimitMap.set(key, { count: 1, windowStart: now });
+    return true;
+  }
+
+  if (entry.count >= limit) {
     return false;
   }
-  await env.CODETYPE_KV.put(key, String(current + 1), { expirationTtl: 120 });
+
+  entry.count++;
   return true;
 }
 
@@ -232,7 +247,7 @@ export default {
           return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
         }
 
-        const allowed = await enforceRateLimit(env, request, 'auth-verify', rateLimit);
+        const allowed = enforceRateLimit(request, 'auth-verify', rateLimit);
         if (!allowed) {
           return jsonResponse(request, env, { error: 'Too many requests' }, 429);
         }
@@ -263,7 +278,7 @@ export default {
           return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
         }
 
-        const allowed = await enforceRateLimit(env, request, 'auth-register', rateLimit);
+        const allowed = enforceRateLimit(request, 'auth-register', rateLimit);
         if (!allowed) {
           return jsonResponse(request, env, { error: 'Too many requests' }, 429);
         }
@@ -401,7 +416,7 @@ export default {
           return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
         }
 
-        const allowed = await enforceRateLimit(env, request, 'games', rateLimit);
+        const allowed = enforceRateLimit(request, 'games', rateLimit);
         if (!allowed) {
           return jsonResponse(request, env, { error: 'Too many requests' }, 429);
         }
@@ -473,73 +488,12 @@ export default {
         return jsonResponse(request, env, response);
       }
 
-      if (path === '/scores' && request.method === 'POST') {
-        if (env.ALLOW_ANON_SCORES !== 'true') {
-          return jsonResponse(request, env, { error: 'Not found' }, 404);
-        }
-
-        if (!requireJsonContentType(request)) {
-          return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
-        }
-
-        const allowed = await enforceRateLimit(env, request, 'scores', rateLimit);
-        if (!allowed) {
-          return jsonResponse(request, env, { error: 'Too many requests' }, 429);
-        }
-
-        const body = await readJson<any>(request);
-        if (!body) {
-          return jsonResponse(request, env, { error: 'Invalid JSON body' }, 400);
-        }
-
-        const { userId, username, wpm, accuracy, time, characters, errors } = body;
-        if (!userId || !username || wpm === undefined) {
-          return jsonResponse(request, env, { error: 'Missing required fields' }, 400);
-        }
-
-        const scoreKey = `score:${userId}:${Date.now()}`;
-        await env.CODETYPE_KV.put(
-          scoreKey,
-          JSON.stringify({
-            userId,
-            username,
-            wpm,
-            accuracy,
-            time,
-            characters,
-            errors,
-            timestamp: Date.now(),
-          }),
-          { expirationTtl: 60 * 60 * 24 * 90 }
-        );
-
-        const userStatsKey = `user:${userId}`;
-        const existingStats = await env.CODETYPE_KV.get(userStatsKey);
-        const stats = existingStats
-          ? JSON.parse(existingStats)
-          : {
-              username,
-              totalGames: 0,
-              totalWpm: 0,
-              bestWpm: 0,
-            };
-
-        stats.username = username;
-        stats.totalGames++;
-        stats.totalWpm += wpm;
-        stats.bestWpm = Math.max(stats.bestWpm, wpm);
-        stats.lastPlayed = Date.now();
-
-        await env.CODETYPE_KV.put(userStatsKey, JSON.stringify(stats));
-        return jsonResponse(request, env, { success: true });
-      }
-
       if (path === '/rooms' && request.method === 'POST') {
         if (!requireJsonContentType(request)) {
           return jsonResponse(request, env, { error: 'Expected JSON body' }, 415);
         }
 
-        const allowed = await enforceRateLimit(env, request, 'rooms', rateLimit);
+        const allowed = enforceRateLimit(request, 'rooms', rateLimit);
         if (!allowed) {
           return jsonResponse(request, env, { error: 'Too many requests' }, 429);
         }
@@ -553,21 +507,20 @@ export default {
 
         let roomCode = generateRoomCode();
         let attempts = 0;
-        while ((await env.CODETYPE_KV.get(`room:${roomCode}`)) && attempts < 10) {
+        while ((await isRoomCodeTaken(env, roomCode)) && attempts < 10) {
           roomCode = generateRoomCode();
           attempts++;
         }
 
-        await env.CODETYPE_KV.put(
-          `room:${roomCode}`,
-          JSON.stringify({
-            code: roomCode,
-            hostId,
-            hostUsername,
-            createdAt: Date.now(),
-          }),
-          { expirationTtl: 60 * 60 * 2 }
-        );
+        const roomData: RoomDocument = {
+          code: roomCode,
+          hostId,
+          hostUsername,
+          createdAt: Date.now(),
+          expiresAt: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+        };
+
+        await createRoom(env, roomData);
 
         return jsonResponse(request, env, { code: roomCode });
       }
