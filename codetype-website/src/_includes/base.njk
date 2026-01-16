@@ -29,7 +29,17 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
-  <script src="/assets/js/firebase-config.js"></script>
+  <script>
+    window.FIREBASE_CONFIG = {
+      apiKey: "{{ firebase.apiKey }}",
+      authDomain: "{{ firebase.authDomain }}",
+      projectId: "{{ firebase.projectId }}",
+      storageBucket: "{{ firebase.storageBucket }}",
+      messagingSenderId: "{{ firebase.messagingSenderId }}",
+      appId: "{{ firebase.appId }}"
+    };
+    window.API_BASE = "{{ firebase.apiBase }}";
+  </script>
 </head>
 <body>
   <div class="vscode-window">

@@ -1,15 +1,16 @@
 // Firebase Configuration for CodeType
-// These values should be replaced with your actual Firebase config
-// or loaded from environment variables at build time
-
-window.FIREBASE_CONFIG = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// API Base URL - update this to your Cloudflare Worker URL
-window.API_BASE = "https://codetype-api.thisisnsh.workers.dev";
+//
+// NOTE: This file is no longer loaded directly.
+// Configuration is now injected at build time via environment variables.
+//
+// Set these environment variables before building:
+//   FIREBASE_API_KEY
+//   FIREBASE_AUTH_DOMAIN
+//   FIREBASE_PROJECT_ID
+//   FIREBASE_STORAGE_BUCKET
+//   FIREBASE_MESSAGING_SENDER_ID
+//   FIREBASE_APP_ID
+//   API_BASE (optional, defaults to https://codetype-api.thisisnsh.workers.dev)
+//
+// Example:
+//   FIREBASE_API_KEY=AIza... FIREBASE_PROJECT_ID=my-project npm run build
