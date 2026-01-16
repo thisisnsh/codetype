@@ -445,11 +445,13 @@ export class CodeTypePanel {
 
         /* Welcome screen - VS Code Getting Started style */
         .welcome-shell {
+            --welcome-offset: clamp(-140px, -14vh, -72px);
             flex: 1;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 0px 52px 52px;
+            padding: 24px 52px 56px;
             overflow-y: auto;
         }
 
@@ -459,6 +461,7 @@ export class CodeTypePanel {
             display: flex;
             flex-direction: column;
             gap: 20px;
+            transform: translateY(var(--welcome-offset));
         }
 
         .welcome-header {
@@ -700,7 +703,7 @@ export class CodeTypePanel {
 
         @media (max-width: 600px) {
             .welcome-shell {
-                padding: 24px 24px 40px;
+                padding: 20px 24px 48px;
             }
 
             .welcome-grid {
@@ -1091,6 +1094,70 @@ export class CodeTypePanel {
             multiplayerResults: null
         };
 
+        let welcomeOffset = null;
+        let welcomeOffsetTarget = null;
+        let welcomeOffsetRaf = null;
+
+        function computeWelcomeOffset() {
+            const height = window.innerHeight || document.documentElement.clientHeight || 0;
+            let offset = Math.max(-140, Math.min(-0.14 * height, -72));
+            const minHeight = 520;
+            const maxHeight = 720;
+
+            if (height <= maxHeight) {
+                const t = Math.max(0, Math.min(1, (height - minHeight) / (maxHeight - minHeight)));
+                offset *= t;
+            }
+
+            return offset;
+        }
+
+        function applyWelcomeOffset(offset) {
+            const shell = document.querySelector('.welcome-shell');
+            if (!shell) {
+                return;
+            }
+            shell.style.setProperty('--welcome-offset', offset.toFixed(1) + 'px');
+        }
+
+        function scheduleWelcomeOffsetUpdate() {
+            const target = computeWelcomeOffset();
+            if (welcomeOffset === null) {
+                welcomeOffset = target;
+                applyWelcomeOffset(target);
+                return;
+            }
+
+            welcomeOffsetTarget = target;
+            if (welcomeOffsetRaf) {
+                return;
+            }
+
+            const step = () => {
+                const delta = welcomeOffsetTarget - welcomeOffset;
+                if (Math.abs(delta) < 0.5) {
+                    welcomeOffset = welcomeOffsetTarget;
+                    applyWelcomeOffset(welcomeOffset);
+                    welcomeOffsetRaf = null;
+                    return;
+                }
+
+                welcomeOffset += delta * 0.18;
+                applyWelcomeOffset(welcomeOffset);
+                welcomeOffsetRaf = requestAnimationFrame(step);
+            };
+
+            welcomeOffsetRaf = requestAnimationFrame(step);
+        }
+
+        window.addEventListener('resize', scheduleWelcomeOffsetUpdate);
+        if (typeof ResizeObserver !== 'undefined') {
+            const resizeObserver = new ResizeObserver(() => {
+                scheduleWelcomeOffsetUpdate();
+            });
+            resizeObserver.observe(document.body);
+        }
+
         function init() {
             switch(state.mode) {
                 case 'menu':
@@ -1172,7 +1239,7 @@ export class CodeTypePanel {
                 <div class="welcome-shell">
                     <div class="welcome-container">
                         <div class="welcome-header">
-                            <div class="welcome-title">CodeType</div>
+                            <div class="welcome-title">Code Type</div>
                             <div class="welcome-subtitle">Typing practice for developers</div>
                         </div>
                         <div class="welcome-grid">
@@ -1245,6 +1312,7 @@ export class CodeTypePanel {
                     </div>
                 </div>
             \`;
+            scheduleWelcomeOffsetUpdate();
         }
 
         function renderLoading(message) {
