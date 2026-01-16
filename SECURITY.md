@@ -41,7 +41,7 @@ Security concerns include:
 - Social engineering
 - Issues in dependencies (report to respective projects)
 
-## Security Best Practices
+## Security Guidelines
 
 When using CodeType:
 
