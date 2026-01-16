@@ -380,27 +380,108 @@ function initSidebarToggle() {
 function initBreadcrumbUpdater() {
   const breadcrumb = document.querySelector('.breadcrumb');
   const tabName = document.querySelector('.tab.active span:not(.tab-close)');
+  const statusFilename = document.querySelector('.status-filename');
+  const statusLanguage = document.querySelector('.status-language');
   const fileItems = document.querySelectorAll('.file-item');
+  const fileItemList = Array.from(fileItems);
 
   if (!breadcrumb) return;
 
-  // Map hrefs to breadcrumb labels
-  const breadcrumbMap = {
-    '/': { crumbs: [{ label: 'codetype', href: '/' }], tab: 'codetype' },
-    '/#hero': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'welcome.ts', href: '/#hero' }], tab: 'welcome.ts' },
-    '/#features': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'features.ts', href: '/#features' }], tab: 'features.ts' },
-    '/#download': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'config.json', href: '/#download' }], tab: 'config.json' },
-    '/#opensource': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'README.md', href: '/#opensource' }], tab: 'README.md' },
-    '/#faq': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'faq.ts', href: '/#faq' }], tab: 'faq.ts' },
-    '/dashboard/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'dashboard.ts', href: '/dashboard/' }], tab: 'dashboard.ts' },
-    '/leaderboard/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'leaderboard.ts', href: '/leaderboard/' }], tab: 'leaderboard.ts' },
-    '/auth/login/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'login.json', href: '/auth/login/' }], tab: 'login.json' },
-    '/privacy/': { crumbs: [{ label: 'codetype', href: '/' }, { label: 'privacy.md', href: '/privacy/' }], tab: 'privacy.md' }
+  const normalizeHref = (href) => {
+    if (!href) return '/';
+    const url = new URL(href, window.location.origin);
+    const path = url.pathname;
+    if (url.hash) {
+      return `${path}#${url.hash.slice(1)}`;
+    }
+    if (path !== '/' && !path.endsWith('/')) {
+      return `${path}/`;
+    }
+    return path;
   };
 
-  const updateBreadcrumb = (href) => {
+  // Map hrefs to breadcrumb labels
+  const breadcrumbMap = {
+    '/': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'welcome.ts', href: '/#hero' }],
+      tab: 'welcome.ts',
+      language: 'TypeScript'
+    },
+    '/#hero': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'welcome.ts', href: '/#hero' }],
+      tab: 'welcome.ts',
+      language: 'TypeScript'
+    },
+    '/#features': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'features.ts', href: '/#features' }],
+      tab: 'features.ts',
+      language: 'TypeScript'
+    },
+    '/#download': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'download.json', href: '/#download' }],
+      tab: 'download.json',
+      language: 'JSON'
+    },
+    '/#opensource': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'contributing.md', href: '/#opensource' }],
+      tab: 'contributing.md',
+      language: 'Markdown'
+    },
+    '/#faq': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'faq.ts', href: '/#faq' }],
+      tab: 'faq.ts',
+      language: 'TypeScript'
+    },
+    '/dashboard/': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'dashboard.ts', href: '/dashboard/' }],
+      tab: 'dashboard.ts',
+      language: 'TypeScript'
+    },
+    '/leaderboard/': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'leaderboard.ts', href: '/leaderboard/' }],
+      tab: 'leaderboard.ts',
+      language: 'TypeScript'
+    },
+    '/auth/login/': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'user', href: '/dashboard/' }, { label: 'login.json', href: '/auth/login/' }],
+      tab: 'login.json',
+      language: 'JSON'
+    },
+    '/privacy/': {
+      crumbs: [{ label: 'codetype', href: '/' }, { label: 'privacy.md', href: '/privacy/' }],
+      tab: 'privacy.md',
+      language: 'Markdown'
+    }
+  };
+
+  const setActiveItem = (activeItem, normalizedHref, mapping) => {
+    fileItemList.forEach(item => item.classList.remove('active'));
+    if (activeItem) {
+      activeItem.classList.add('active');
+      return;
+    }
+
+    if (mapping && mapping.tab) {
+      const matchByLabel = fileItemList.find(item => {
+        const label = item.querySelector('span');
+        return label && label.textContent.trim() === mapping.tab;
+      });
+      if (matchByLabel) {
+        matchByLabel.classList.add('active');
+        return;
+      }
+    }
+
+    const matches = fileItemList.filter(item => normalizeHref(item.getAttribute('href')) === normalizedHref);
+    if (matches.length) {
+      const preferred = matches.find(item => !item.classList.contains('folder')) || matches[0];
+      preferred.classList.add('active');
+    }
+  };
+
+  const updateBreadcrumb = (href, activeItem = null) => {
     // Normalize href
-    const normalizedHref = href.replace(window.location.origin, '');
+    const normalizedHref = normalizeHref(href);
     const mapping = breadcrumbMap[normalizedHref] || breadcrumbMap['/#hero'];
 
     if (!mapping) return;
@@ -420,23 +501,21 @@ function initBreadcrumbUpdater() {
     if (tabName) {
       tabName.textContent = mapping.tab;
     }
+    if (statusFilename) {
+      statusFilename.textContent = mapping.tab;
+    }
+    if (statusLanguage) {
+      statusLanguage.textContent = mapping.language || 'Plain Text';
+    }
 
-    // Update active state on file items
-    fileItems.forEach(item => {
-      const itemHref = item.getAttribute('href');
-      if (itemHref === normalizedHref || itemHref === href) {
-        item.classList.add('active');
-      } else {
-        item.classList.remove('active');
-      }
-    });
+    setActiveItem(activeItem, normalizedHref, mapping);
   };
 
   // Add click handlers to file items
   fileItems.forEach(item => {
     item.addEventListener('click', (e) => {
       const href = item.getAttribute('href');
-      updateBreadcrumb(href);
+      updateBreadcrumb(href, item);
     });
   });
 
@@ -447,15 +526,19 @@ function initBreadcrumbUpdater() {
 
   // Set initial breadcrumb based on current URL
   const initialHref = window.location.pathname + window.location.hash;
-  if (breadcrumbMap[initialHref]) {
+  if (breadcrumbMap[normalizeHref(initialHref)]) {
     updateBreadcrumb(initialHref);
   }
 }
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', () => {
-  new TypingDemo();
-  new FAQ();
+  if (document.getElementById('typing-demo')) {
+    new TypingDemo();
+  }
+  if (document.querySelector('.faq-item')) {
+    new FAQ();
+  }
   initSmoothScroll();
   initScrollAnimations();
   initSidebarToggle();
