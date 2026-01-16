@@ -447,49 +447,51 @@ export class CodeTypePanel {
         .welcome-shell {
             flex: 1;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             justify-content: center;
-            padding: 15vh 40px 48px;
+            padding: 0px 52px 52px;
             overflow-y: auto;
         }
 
         .welcome-container {
             width: 100%;
-            max-width: 700px;
+            max-width: 882px;
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 20px;
         }
 
         .welcome-header {
             display: flex;
             flex-direction: column;
-            gap: 4px;
+            gap: 0;
+            margin-bottom: 4px;
         }
 
         .welcome-title {
-            font-size: 28px;
-            font-weight: 300;
+            font-size: 32px;
+            font-weight: 400;
             color: var(--vscode-foreground);
-            letter-spacing: -0.5px;
+            margin-bottom: 4px;
         }
 
         .welcome-subtitle {
             color: var(--vscode-descriptionForeground);
-            font-size: 13px;
+            font-size: 16px;
             font-weight: 400;
+            margin-top: 0;
         }
 
         .welcome-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 48px;
+            gap: 10%;
         }
 
         .welcome-column {
             display: flex;
             flex-direction: column;
-            gap: 24px;
+            gap: 26px;
             min-width: 0;
         }
 
@@ -500,9 +502,10 @@ export class CodeTypePanel {
         }
 
         .welcome-section-title {
-            font-size: 13px;
+            font-size: 16px;
             font-weight: 400;
             color: var(--vscode-foreground);
+            letter-spacing: 0.04em;
         }
 
         .start-links {
@@ -516,7 +519,7 @@ export class CodeTypePanel {
             border: none;
             color: var(--vscode-textLink-foreground);
             font-family: inherit;
-            font-size: 13px;
+            font-size: 14px;
             cursor: pointer;
             text-align: left;
             display: flex;
@@ -531,8 +534,8 @@ export class CodeTypePanel {
         }
 
         .start-icon {
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -543,7 +546,7 @@ export class CodeTypePanel {
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            gap: 14px;
         }
 
         .stat-card {
@@ -553,22 +556,22 @@ export class CodeTypePanel {
         }
 
         .stat-card-value {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
             color: var(--vscode-foreground);
         }
 
         .stat-card-label {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
         }
 
         .streak-section {
-            margin-top: 8px;
+            margin-top: 12px;
         }
 
         .streak-label {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
             margin-bottom: 8px;
         }
@@ -595,9 +598,9 @@ export class CodeTypePanel {
         }
 
         .stats-note {
-            font-size: 11px;
+            font-size: 12px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 12px;
+            margin-top: 14px;
             line-height: 1.5;
         }
 
@@ -607,7 +610,7 @@ export class CodeTypePanel {
             color: var(--vscode-textLink-foreground);
             cursor: pointer;
             font-family: inherit;
-            font-size: 11px;
+            font-size: 12px;
             padding: 0;
         }
 
@@ -625,7 +628,7 @@ export class CodeTypePanel {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 13px;
+            font-size: 14px;
             padding: 6px 0;
             border-bottom: 1px solid var(--vscode-widget-border, transparent);
         }
@@ -642,30 +645,31 @@ export class CodeTypePanel {
 
         .recent-accuracy {
             color: var(--vscode-descriptionForeground);
-            font-size: 12px;
+            font-size: 13px;
             min-width: 40px;
         }
 
         .recent-date {
             color: var(--vscode-descriptionForeground);
-            font-size: 11px;
+            font-size: 12px;
             margin-left: auto;
         }
 
         .recent-empty {
             color: var(--vscode-descriptionForeground);
-            font-size: 12px;
+            font-size: 13px;
             font-style: italic;
         }
 
         .welcome-footer {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             flex-wrap: wrap;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 32px;
+            margin-top: 64px;
+            padding-top: 16px;
         }
 
         .welcome-footer a,
@@ -690,9 +694,13 @@ export class CodeTypePanel {
             opacity: 0.4;
         }
 
+        .footer-author {
+            color: var(--vscode-descriptionForeground);
+        }
+
         @media (max-width: 600px) {
             .welcome-shell {
-                padding: 10vh 24px 40px;
+                padding: 24px 24px 40px;
             }
 
             .welcome-grid {
@@ -1189,12 +1197,14 @@ export class CodeTypePanel {
                                     </div>
                                 </div>
                                 <div class="welcome-footer">
-                                    \${isAuthenticated && user
-                                        ? \`<span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button><span class="footer-separator">·</span>\`
-                                        : ''}
-                                    <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">GitHub</a>
+                                    <span class="footer-author">Created by Nishant Hada</span>
+                                    <span class="footer-separator">·</span>
+                                    <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">Star on GitHub</a>
                                     <span class="footer-separator">·</span>
                                     <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
+                                    \${isAuthenticated && user
+                                        ? \`<span class="footer-separator">·</span><span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button>\`
+                                        : ''}
                                 </div>
                             </div>
                             <div class="welcome-column">
