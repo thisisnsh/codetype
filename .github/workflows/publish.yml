@@ -94,6 +94,16 @@ jobs:
       - name: Install worker dependencies
         run: npm install
 
+      - name: Inject KV namespace id
+        run: |
+          if [ -z "${CODETYPE_KV_ID}" ]; then
+            echo "CODETYPE_KV_ID secret is missing." >&2
+            exit 1
+          fi
+          sed -i "s/your-kv-namespace-id/${CODETYPE_KV_ID}/" wrangler.toml
+        env:
+          CODETYPE_KV_ID: ${{ secrets.CODETYPE_KV_ID }}
+
       - name: Deploy Cloudflare Worker
         run: npx wrangler deploy
         env:
