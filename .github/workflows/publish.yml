@@ -4,10 +4,11 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch:
 
 jobs:
   publish:
-    if: ${{ github.event.created }}
+    if: ${{ github.event.created || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     defaults:
       run:
