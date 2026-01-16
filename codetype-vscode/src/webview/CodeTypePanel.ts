@@ -750,7 +750,7 @@ export class CodeTypePanel {
         .recent-empty {
             color: var(--vscode-descriptionForeground);
             font-size: 13px;
-            font-style: italic;
+            font-style: normal;
         }
 
         .welcome-footer {
@@ -1333,7 +1333,7 @@ export class CodeTypePanel {
                         </div>
                     \`;
                 }).join('')
-                : '<div class="recent-empty">No sessions yet. Start typing!</div>';
+                : '<div class="recent-empty">No sessions yet.</div>';
 
             const authName = user?.username || user?.displayName || 'User';
             const authMarkup = isAuthenticated && user
