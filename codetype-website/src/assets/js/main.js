@@ -328,38 +328,6 @@ function initSmoothScroll() {
   });
 }
 
-// Activity bar active state
-function initActivityBar() {
-  const icons = document.querySelectorAll('.activity-icon');
-  const sections = ['hero', 'features', 'download', 'faq'];
-  const scrollContainer = document.querySelector('.editor-content');
-
-  if (!scrollContainer || icons.length === 0) {
-    return;
-  }
-
-  const updateActive = () => {
-    const scrollPos = scrollContainer.scrollTop + 200;
-
-    sections.forEach((section, index) => {
-      const element = document.getElementById(section);
-      if (!element) {
-        return;
-      }
-      const top = element.offsetTop;
-      const bottom = top + element.offsetHeight;
-
-      if (scrollPos >= top && scrollPos < bottom) {
-        icons.forEach(icon => icon.classList.remove('active'));
-        icons[index]?.classList.add('active');
-      }
-    });
-  };
-
-  scrollContainer.addEventListener('scroll', updateActive);
-  updateActive();
-}
-
 // Animate elements on scroll
 function initScrollAnimations() {
   const observer = new IntersectionObserver((entries) => {
@@ -413,7 +381,6 @@ function initBreadcrumbUpdater() {
   const breadcrumb = document.querySelector('.breadcrumb');
   const tabName = document.querySelector('.tab.active span:not(.tab-close)');
   const fileItems = document.querySelectorAll('.file-item');
-  const activityIcons = document.querySelectorAll('.activity-icon');
 
   if (!breadcrumb) return;
 
@@ -473,14 +440,6 @@ function initBreadcrumbUpdater() {
     });
   });
 
-  // Add click handlers to activity icons
-  activityIcons.forEach(icon => {
-    icon.addEventListener('click', (e) => {
-      const href = icon.getAttribute('href');
-      updateBreadcrumb(href);
-    });
-  });
-
   // Update on hash change
   window.addEventListener('hashchange', () => {
     updateBreadcrumb(window.location.pathname + window.location.hash);
@@ -498,7 +457,6 @@ document.addEventListener('DOMContentLoaded', () => {
   new TypingDemo();
   new FAQ();
   initSmoothScroll();
-  initActivityBar();
   initScrollAnimations();
   initSidebarToggle();
   initBreadcrumbUpdater();
