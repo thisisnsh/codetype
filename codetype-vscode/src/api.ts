@@ -4,15 +4,6 @@ import { AuthService } from './auth';
 const API_BASE = process.env.CODETYPE_API_URL || '';
 const OFFLINE_MODE = !API_BASE;
 
-export interface LeaderboardEntry {
-    rank: number;
-    userId: string;
-    username: string;
-    photoURL?: string;
-    avgWpm: number;
-    gamesPlayed: number;
-    bestWpm: number;
-}
 
 export interface GameResult {
     wpm: number;
@@ -50,11 +41,17 @@ export interface GameDocument {
     date: string;
 }
 
-export type LeaderboardTimeframe = 'daily' | 'weekly' | 'monthly' | 'yearly' | 'alltime';
-
 export class ApiClient {
     private context: vscode.ExtensionContext;
     private authService: AuthService;
+    private sessionStats = {
+        games: [] as Array<GameResult & { timestamp: number }>,
+        totalWpm: 0,
+        bestWpm: 0,
+        gamesPlayed: 0,
+        currentStreak: 0,
+        longestStreak: 0
+    };
 
     constructor(context: vscode.ExtensionContext, authService: AuthService) {
         this.context = context;
@@ -70,7 +67,7 @@ export class ApiClient {
      * Submit a game score - uses authenticated endpoint if logged in, otherwise local only.
      */
     async submitScore(result: GameResult): Promise<void> {
-        // Always store locally
+        // Always store in-session
         this.storeLocalScore(result);
 
         if (OFFLINE_MODE) {
@@ -116,42 +113,21 @@ export class ApiClient {
     }
 
     private storeLocalScore(result: GameResult) {
-        const stats = this.context.globalState.get<any>('localStats') || {
-            games: [],
-            totalWpm: 0,
-            bestWpm: 0,
-            gamesPlayed: 0
-        };
-
+        const stats = this.sessionStats;
         stats.games.push({ ...result, timestamp: Date.now() });
         stats.totalWpm += result.wpm;
         stats.bestWpm = Math.max(stats.bestWpm, result.wpm);
         stats.gamesPlayed++;
-
-        this.context.globalState.update('localStats', stats);
     }
 
     private updateLocalStatsFromServer(serverStats: { totalGamesPlayed: number; avgWpm: number; bestWpm: number; currentStreak: number }) {
-        const stats = this.context.globalState.get<any>('localStats') || {
-            games: [],
-            totalWpm: 0,
-            bestWpm: 0,
-            gamesPlayed: 0
-        };
-
+        const stats = this.sessionStats;
         stats.bestWpm = Math.max(stats.bestWpm, serverStats.bestWpm);
         stats.currentStreak = serverStats.currentStreak;
-
-        this.context.globalState.update('localStats', stats);
     }
 
     getLocalStats() {
-        return this.context.globalState.get<any>('localStats') || {
-            games: [],
-            totalWpm: 0,
-            bestWpm: 0,
-            gamesPlayed: 0
-        };
+        return this.sessionStats;
     }
 
     /**
@@ -159,15 +135,7 @@ export class ApiClient {
      */
     async getUserStats(): Promise<UserStats | null> {
         if (OFFLINE_MODE || !this.authService.isAuthenticated()) {
-            const localStats = this.getLocalStats();
-            return {
-                totalGamesPlayed: localStats.gamesPlayed,
-                totalWpm: localStats.totalWpm,
-                bestWpm: localStats.bestWpm,
-                avgWpm: localStats.gamesPlayed > 0 ? Math.round(localStats.totalWpm / localStats.gamesPlayed) : 0,
-                currentStreak: localStats.currentStreak || 0,
-                longestStreak: localStats.longestStreak || 0
-            };
+            return null;
         }
 
         try {
@@ -249,32 +217,6 @@ export class ApiClient {
             return data.recentGames || [];
         } catch (error) {
             console.error('Failed to fetch recent games:', error);
-            return [];
-        }
-    }
-
-    async getLeaderboard(timeframe: LeaderboardTimeframe = 'weekly'): Promise<LeaderboardEntry[]> {
-        if (OFFLINE_MODE || !this.authService.isAuthenticated()) {
-            const stats = this.getLocalStats();
-            if (stats.gamesPlayed === 0) return [];
-
-            const userId = this.getUserId();
-            return [{
-                rank: 1,
-                userId: userId || 'local',
-                username: 'You',
-                avgWpm: Math.round(stats.totalWpm / stats.gamesPlayed),
-                gamesPlayed: stats.gamesPlayed,
-                bestWpm: stats.bestWpm
-            }];
-        }
-
-        try {
-            const response = await fetch(`${API_BASE}/leaderboard?timeframe=${timeframe}`);
-            if (!response.ok) throw new Error('Failed to fetch leaderboard');
-            return await response.json() as LeaderboardEntry[];
-        } catch (error) {
-            console.error('Failed to fetch leaderboard:', error);
             return [];
         }
     }

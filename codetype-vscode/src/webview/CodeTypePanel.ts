@@ -143,15 +143,18 @@ export class CodeTypePanel {
                 break;
 
             case 'getStats':
+                const streakYear = typeof message.streakYear === 'number' ? message.streakYear : undefined;
                 const userStats = await this._api.getUserStats();
-                const streakData = await this._api.getStreakData();
+                const streakData = await this._api.getStreakData(streakYear);
                 const recentGames = await this._api.getRecentGames();
+                const resolvedStreakYear = streakYear ?? new Date().getFullYear();
                 this._panel.webview.postMessage({
                     type: 'stats',
                     data: {
-                        ...userStats,
+                        ...(userStats || {}),
                         games: recentGames,
-                        streakData
+                        streakData,
+                        streakYear: resolvedStreakYear
                     },
                     isAuthenticated: this._api.isAuthenticated(),
                     user: this._api.getCurrentUser()
@@ -573,51 +576,145 @@ export class CodeTypePanel {
             margin-top: 12px;
         }
 
-        .streak-label {
-            font-size: 12px;
-            color: var(--vscode-descriptionForeground);
+        .streak-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 8px;
         }
 
-        .streak-boxes {
+        .streak-select {
+            background: none;
+            color: var(--vscode-foreground);
+            border: none;
+            font-family: inherit;
+            font-size: 16px;
+            padding: 0;
+            cursor: pointer;
+            appearance: none;
+        }
+
+        .streak-select:hover {
+            color: var(--vscode-textLink-foreground);
+        }
+
+        .streak-calendar {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            align-items: start;
+            justify-items: center;
+        }
+
+        .streak-month {
             display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .streak-day-labels {
+            display: grid;
+            grid-template-columns: repeat(7, 18px);
+            gap: 4px;
+            font-size: 10px;
+            color: var(--vscode-descriptionForeground);
+            text-align: center;
+        }
+
+        .streak-days {
+            display: grid;
+            grid-template-columns: repeat(7, 18px);
             gap: 4px;
         }
 
-        .streak-box {
-            width: 14px;
-            height: 14px;
-            border-radius: 2px;
+        .streak-day {
+            width: 18px;
+            height: 18px;
+            border-radius: 3px;
             background: var(--vscode-editor-inactiveSelectionBackground, #3c3c3c);
         }
 
-        .streak-box.filled {
+        .streak-day.active {
             background: var(--vscode-terminal-ansiGreen, #4ec9b0);
         }
 
-        .streak-box.today {
+        .streak-day.today {
             outline: 1px solid var(--vscode-focusBorder);
             outline-offset: 1px;
         }
 
-        .stats-note {
-            font-size: 12px;
-            color: var(--vscode-descriptionForeground);
-            margin-top: 14px;
-            line-height: 1.5;
+        .streak-day.empty {
+            visibility: hidden;
         }
 
-        .link-button {
+        .stats-auth {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 0;
+            color: var(--vscode-foreground);
+            font-size: 14px;
+            line-height: 1.5;
+            width: fit-content;
+            align-self: flex-start;
+        }
+
+        .stats-auth-button {
             background: none;
             border: none;
-            color: var(--vscode-textLink-foreground);
+            color: var(--vscode-foreground);
             cursor: pointer;
             font-family: inherit;
-            font-size: 12px;
-            padding: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 4px 0;
+            text-align: left;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        .link-button:hover {
+        .stats-auth-button:hover .auth-highlight {
+            text-decoration: underline;
+        }
+
+        .auth-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-icon {
+            width: 18px;
+            height: 18px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--vscode-foreground);
+            flex-shrink: 0;
+        }
+
+        .auth-highlight {
+            color: var(--vscode-textLink-foreground);
+            font-weight: normal;
+        }
+
+        .auth-action {
+            background: none;
+            border: none;
+            color: var(--vscode-foreground);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            padding: 4px 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .auth-action:hover .auth-highlight {
             text-decoration: underline;
         }
 
@@ -763,68 +860,6 @@ export class CodeTypePanel {
         .result-stat-label {
             font-size: 11px;
             color: var(--vscode-descriptionForeground);
-        }
-
-        /* Leaderboard */
-        .leaderboard-container {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0;
-            text-align: left;
-        }
-
-        .leaderboard-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .leaderboard-tab {
-            padding: 6px 12px;
-            background: var(--vscode-button-secondaryBackground);
-            border: none;
-            color: var(--vscode-button-secondaryForeground);
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 12px;
-            border-radius: 2px;
-        }
-
-        .leaderboard-tab.active {
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-        }
-
-        .leaderboard-entry {
-            display: flex;
-            align-items: center;
-            padding: 10px 14px;
-            background: var(--vscode-editorWidget-background);
-            margin: 3px 0;
-            border-radius: 2px;
-        }
-
-        .leaderboard-rank {
-            width: 36px;
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--vscode-descriptionForeground);
-        }
-
-        .leaderboard-rank.top1 { color: #ffd700; }
-        .leaderboard-rank.top2 { color: #c0c0c0; }
-        .leaderboard-rank.top3 { color: #cd7f32; }
-
-        .leaderboard-name {
-            flex: 1;
-            color: var(--vscode-editor-foreground);
-        }
-
-        .leaderboard-wpm {
-            font-size: 16px;
-            color: var(--vscode-textLink-foreground);
-            font-weight: bold;
         }
 
         .section-title {
@@ -1069,7 +1104,6 @@ export class CodeTypePanel {
         const userJson = currentUser ? JSON.stringify(currentUser) : 'null';
         const displayName = currentUser?.username || currentUser?.displayName || 'Player';
         const displayNameJson = JSON.stringify(displayName);
-
         return `
         const vscode = acquireVsCodeApi();
         const state = {
@@ -1081,7 +1115,7 @@ export class CodeTypePanel {
             currentTimeframe: 'weekly',
             isAuthenticated: ${isAuthenticated},
             user: ${userJson},
-            streakData: null,
+            streakDataByYear: {},
             stats: null,
             // Multiplayer state
             roomCode: null,
@@ -1093,6 +1127,22 @@ export class CodeTypePanel {
             countdownValue: null,
             multiplayerResults: null
         };
+
+        const STREAK_MIN_YEAR = 2026;
+        const STREAK_MAX_YEAR = 2036;
+        const STREAK_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const STREAK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+        function clampStreakYear(year) {
+            return Math.min(STREAK_MAX_YEAR, Math.max(STREAK_MIN_YEAR, year));
+        }
+
+        function clampStreakMonth(month) {
+            return Math.min(11, Math.max(0, month));
+        }
+
+        let streakViewYear = clampStreakYear(new Date().getFullYear());
+        let streakViewMonth = clampStreakMonth(new Date().getMonth());
 
         let welcomeOffset = null;
         let welcomeOffsetTarget = null;
@@ -1174,7 +1224,7 @@ export class CodeTypePanel {
                     showMultiplayerOptions();
                     break;
                 case 'stats':
-                    vscode.postMessage({ type: 'getStats' });
+                    ensureStreakDataForView();
                     renderLoading('Loading stats...');
                     break;
             }
@@ -1182,40 +1232,114 @@ export class CodeTypePanel {
 
         function renderWelcome(data, isAuthenticated, user) {
             const app = document.getElementById('app');
-            const hasData = Boolean(data);
             const stats = data || {};
-            const avgWpm = stats.avgWpm || (stats.totalGamesPlayed > 0 ? Math.round(stats.totalWpm / stats.totalGamesPlayed) : 0);
-            const gamesPlayed = stats.totalGamesPlayed || stats.gamesPlayed || 0;
-            const bestWpm = stats.bestWpm || 0;
-            const currentStreak = stats.currentStreak || 0;
             const games = stats.games || [];
-            const streakData = stats.streakData || {};
-            const streakActivities = streakData.activities || {};
+            const totalGamesPlayed = stats.totalGamesPlayed ?? stats.gamesPlayed ?? 0;
+            const totalWpm = stats.totalWpm ?? 0;
+            const hasSyncedStats = isAuthenticated && (
+                typeof stats.totalGamesPlayed === 'number' ||
+                typeof stats.avgWpm === 'number' ||
+                typeof stats.bestWpm === 'number' ||
+                typeof stats.currentStreak === 'number'
+            );
+            const avgWpmValue = hasSyncedStats
+                ? (stats.avgWpm ?? (totalGamesPlayed > 0 ? Math.round(totalWpm / totalGamesPlayed) : 0))
+                : '--';
+            const gamesPlayedValue = hasSyncedStats ? totalGamesPlayed : '--';
+            const bestWpmValue = hasSyncedStats ? (stats.bestWpm ?? 0) : '--';
+            const currentStreakValue = hasSyncedStats ? (stats.currentStreak ?? 0) : '--';
+            const streakDataByYear = state.streakDataByYear || {};
+
+            function getActivitiesForYear(year) {
+                return streakDataByYear[year]?.activities || {};
+            }
 
             const soloIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="5" r="2.7"></circle><path d="M3.5 13.2c.8-2.3 2.6-3.4 4.5-3.4s3.7 1.1 4.5 3.4"></path></svg>';
             const teamIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="5.2" r="2.3"></circle><circle cx="11.2" cy="6" r="1.9"></circle><path d="M1.8 13.2c.6-2 2.1-3 3.9-3"></path><path d="M8.4 13.2c.6-1.7 1.9-2.6 3.4-2.6"></path></svg>';
+            const signInIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h3.5a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7"></path><path d="M3 8h6"></path><path d="M6.5 5.5 9 8l-2.5 2.5"></path></svg>';
+            const signOutIcon = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3H5.5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2H9"></path><path d="M13 8H7"></path><path d="M10.5 5.5 13 8l-2.5 2.5"></path></svg>';
 
-            // Generate streak boxes for last 7 days
-            function generateStreakBoxes() {
-                const boxes = [];
+            function getRangeLabel(year, month) {
+                const nextMonth = (month + 1) % 12;
+                const startLabel = STREAK_MONTHS[month].toLowerCase();
+                const endLabel = STREAK_MONTHS[nextMonth].toLowerCase();
+                return \`\${startLabel}-\${endLabel} \${year}\`;
+            }
+
+            function buildRangeOptions(selectedYear, selectedMonth) {
+                const options = [];
+                for (let year = STREAK_MIN_YEAR; year <= STREAK_MAX_YEAR; year++) {
+                    for (let month = 0; month < 12; month++) {
+                        const selected = year === selectedYear && month === selectedMonth ? ' selected' : '';
+                        const label = getRangeLabel(year, month);
+                        options.push(\`<option value="\${year}-\${month}"\${selected}>\${label}</option>\`);
+                    }
+                }
+                return options.join('');
+            }
+
+            function buildMonthGrid(year, month) {
+                const firstDay = new Date(year, month, 1);
+                const totalDays = new Date(year, month + 1, 0).getDate();
+                const offset = firstDay.getDay();
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
+                const activities = getActivitiesForYear(year);
 
-                for (let i = 6; i >= 0; i--) {
-                    const date = new Date(today);
-                    date.setDate(date.getDate() - i);
-                    const dateStr = date.toISOString().split('T')[0];
-                    const isToday = i === 0;
-                    const hasActivity = isAuthenticated && streakActivities[dateStr] && streakActivities[dateStr].gamesPlayed > 0;
+                let html = '<div class="streak-day-labels">';
+                html += STREAK_DAYS.map((day) => \`<span>\${day}</span>\`).join('');
+                html += '</div><div class="streak-days">';
 
-                    let classes = 'streak-box';
-                    if (hasActivity) classes += ' filled';
-                    if (isToday) classes += ' today';
-
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                    boxes.push(\`<div class="\${classes}" title="\${dayName}, \${dateStr}\${hasActivity ? ' - Active' : ''}"></div>\`);
+                for (let i = 0; i < offset; i++) {
+                    html += '<div class="streak-day empty"></div>';
                 }
-                return boxes.join('');
+
+                for (let day = 1; day <= totalDays; day++) {
+                    const date = new Date(year, month, day);
+                    const dateKey = date.toISOString().split('T')[0];
+                    const activity = activities[dateKey];
+                    const gamesPlayed = activity?.gamesPlayed || 0;
+                    const hasActivity = isAuthenticated && gamesPlayed > 0;
+
+                    let classes = 'streak-day';
+                    if (hasActivity) classes += ' active';
+                    if (date.getTime() === today.getTime()) classes += ' today';
+
+                    const dateLabel = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const pointLabel = hasActivity ? '1 point' : '0 points';
+                    const gameLabel = gamesPlayed ? \` (\${gamesPlayed} game\${gamesPlayed !== 1 ? 's' : ''})\` : '';
+                    html += \`<div class="\${classes}" title="\${dateLabel}: \${pointLabel}\${gameLabel}"></div>\`;
+                }
+
+                const totalCells = offset + totalDays;
+                const trailing = (7 - (totalCells % 7)) % 7;
+                for (let i = 0; i < trailing; i++) {
+                    html += '<div class="streak-day empty"></div>';
+                }
+
+                const minWeeks = 5;
+                const minCells = minWeeks * 7;
+                const paddedCells = totalCells + trailing;
+                const extraCells = Math.max(0, minCells - paddedCells);
+                for (let i = 0; i < extraCells; i++) {
+                    html += '<div class="streak-day empty"></div>';
+                }
+
+                html += '</div>';
+                return html;
+            }
+
+            function generateStreakCalendar() {
+                const nextMonth = (streakViewMonth + 1) % 12;
+                const nextYear = streakViewMonth === 11 ? streakViewYear + 1 : streakViewYear;
+                return \`
+                    <div class="streak-month">
+                        \${buildMonthGrid(streakViewYear, streakViewMonth)}
+                    </div>
+                    <div class="streak-month">
+                        \${buildMonthGrid(nextYear, nextMonth)}
+                    </div>
+                \`;
             }
 
             // Recent games - works locally
@@ -1235,6 +1359,10 @@ export class CodeTypePanel {
                 }).join('')
                 : '<div class="recent-empty">No sessions yet. Start typing!</div>';
 
+            const authName = user?.username || user?.displayName || 'User';
+            const authMarkup = isAuthenticated && user
+                ? \`<div class="stats-auth"><span class="auth-status">Logged in as \${authName}</span><button class="auth-action" onclick="logout()"><span class="auth-icon">\${signOutIcon}</span><span class="auth-highlight">Sign out</span></button></div>\`
+                : \`<button class="stats-auth stats-auth-button" type="button" onclick="login()"><span class="auth-icon">\${signInIcon}</span><span><span class="auth-highlight">Sign in</span> to record and view stats</span></button>\`;
             app.innerHTML = \`
                 <div class="welcome-shell">
                     <div class="welcome-container">
@@ -1276,35 +1404,33 @@ export class CodeTypePanel {
                             </div>
                             <div class="welcome-column">
                                 <div class="welcome-section">
-                                    <div class="welcome-section-title">Stats</div>
+                                    <div class="welcome-section-title">Activity</div>
+                                    \${authMarkup}
                                     <div class="stats-grid">
                                         <div class="stat-card">
-                                            <div class="stat-card-value">\${hasData ? gamesPlayed : '--'}</div>
+                                            <div class="stat-card-value">\${gamesPlayedValue}</div>
                                             <div class="stat-card-label">Sessions</div>
                                         </div>
                                         <div class="stat-card">
-                                            <div class="stat-card-value">\${hasData ? avgWpm : '--'}</div>
+                                            <div class="stat-card-value">\${avgWpmValue}</div>
                                             <div class="stat-card-label">Avg WPM</div>
                                         </div>
                                         <div class="stat-card">
-                                            <div class="stat-card-value">\${hasData ? bestWpm : '--'}</div>
+                                            <div class="stat-card-value">\${bestWpmValue}</div>
                                             <div class="stat-card-label">Best WPM</div>
                                         </div>
                                         <div class="stat-card">
-                                            <div class="stat-card-value">\${isAuthenticated && hasData ? currentStreak : '--'}</div>
+                                            <div class="stat-card-value">\${currentStreakValue}</div>
                                             <div class="stat-card-label">Day Streak</div>
                                         </div>
                                     </div>
                                     <div class="streak-section">
-                                        <div class="streak-label">Last 7 days</div>
-                                        <div class="streak-boxes">
-                                            \${generateStreakBoxes()}
+                                        <div class="streak-controls">
+                                            <select id="streak-range" class="streak-select">\${buildRangeOptions(streakViewYear, streakViewMonth)}</select>
                                         </div>
-                                    </div>
-                                    <div class="stats-note">
-                                        \${isAuthenticated
-                                            ? 'Stats synced to your account.'
-                                            : 'These are local stats. <button class="link-button" onclick="login()">Sign in</button> to sync across devices.'}
+                                        <div class="streak-calendar">
+                                            \${generateStreakCalendar()}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1312,7 +1438,59 @@ export class CodeTypePanel {
                     </div>
                 </div>
             \`;
+            setupStreakControls();
             scheduleWelcomeOffsetUpdate();
+        }
+
+        function requestStatsForYear(year) {
+            vscode.postMessage({ type: 'getStats', streakYear: year });
+        }
+
+        function getNextMonthYear(year, month) {
+            const nextMonth = (month + 1) % 12;
+            const nextYear = month === 11 ? year + 1 : year;
+            return { year: nextYear, month: nextMonth };
+        }
+
+        function ensureStreakDataForYear(year) {
+            if (!state.isAuthenticated) {
+                return;
+            }
+            state.streakDataByYear = state.streakDataByYear || {};
+            if (!state.streakDataByYear[year]) {
+                requestStatsForYear(year);
+            }
+        }
+
+        function ensureStreakDataForView() {
+            ensureStreakDataForYear(streakViewYear);
+            const next = getNextMonthYear(streakViewYear, streakViewMonth);
+            if (next.year !== streakViewYear && next.year <= STREAK_MAX_YEAR) {
+                ensureStreakDataForYear(next.year);
+            }
+        }
+
+        function updateStreakView(nextYear, nextMonth) {
+            streakViewYear = clampStreakYear(nextYear);
+            streakViewMonth = clampStreakMonth(nextMonth);
+            ensureStreakDataForView();
+            renderWelcome(state.stats, state.isAuthenticated, state.user);
+        }
+
+        function setupStreakControls() {
+            const rangeSelect = document.getElementById('streak-range');
+
+            if (rangeSelect) {
+                rangeSelect.addEventListener('change', (event) => {
+                    const value = event.target.value || '';
+                    const [yearValue, monthValue] = value.split('-');
+                    const year = parseInt(yearValue, 10);
+                    const month = parseInt(monthValue, 10);
+                    if (!Number.isNaN(year) && !Number.isNaN(month)) {
+                        updateStreakView(year, month);
+                    }
+                });
+            }
         }
 
         function renderLoading(message) {
@@ -1675,7 +1853,7 @@ export class CodeTypePanel {
 
         function showWelcome() {
             state.mode = 'menu';
-            vscode.postMessage({ type: 'getStats' });
+            ensureStreakDataForView();
             renderWelcome(state.stats, state.isAuthenticated, state.user);
         }
 
@@ -2131,6 +2309,12 @@ export class CodeTypePanel {
                     state.isAuthenticated = message.isAuthenticated;
                     state.user = message.user;
                     state.stats = message.data;
+                    if (!message.isAuthenticated) {
+                        state.streakDataByYear = {};
+                    } else if (message.data && typeof message.data.streakYear === 'number') {
+                        state.streakDataByYear = state.streakDataByYear || {};
+                        state.streakDataByYear[message.data.streakYear] = message.data.streakData || { activities: {} };
+                    }
                     renderStats(message.data, message.isAuthenticated, message.user);
                     break;
                 case 'error':

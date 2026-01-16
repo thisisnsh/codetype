@@ -1,7 +1,7 @@
 {
   "name": "codetype",
   "displayName": "CodeType",
-  "description": "Type code for fun while vibe coding. A VS Code game with real snippets, solo/team play, and leaderboards.",
+  "description": "Type code for fun while vibe coding. A VS Code game with real snippets, solo/team play, and streaks.",
   "version": "1.0.0",
   "publisher": "thisisnsh",
   "license": "MIT",

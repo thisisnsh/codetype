@@ -87,7 +87,6 @@ suite('WebView Message Protocol Tests', () => {
             'room_gameStart',
             'room_progress',
             'room_gameEnd',
-            'leaderboard',
             'stats',
             'error'
         ];
@@ -108,7 +107,6 @@ suite('WebView Message Protocol Tests', () => {
             'startMultiplayer',
             'updateProgress',
             'multiplayerFinished',
-            'getLeaderboard',
             'getStats',
             'navigate',
             'copyRoomCode'
