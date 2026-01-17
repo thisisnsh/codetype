@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { v4 as uuidv4 } from 'uuid';
+import * as crypto from 'crypto';
 import { CodeTypePanel } from './webview/CodeTypePanel';
 import { CodeSampleProvider } from './codeSamples';
 import { ApiClient } from './api';
@@ -64,7 +64,7 @@ function ensureUserId(_context: vscode.ExtensionContext): string {
     let userId = config.get<string>('userId') || '';
 
     if (!userId) {
-        userId = uuidv4();
+        userId = crypto.randomUUID();
         config.update('userId', userId, vscode.ConfigurationTarget.Global);
     }
 
