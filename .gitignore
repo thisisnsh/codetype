@@ -10,6 +10,10 @@ codetype-vscode/worker/.wrangler/
 codetype-website/node_modules/
 codetype-website/_site/
 
+# Backend
+codetype-backend/node_modules/
+codetype-backend/package-lock.json
+
 # General
 *.log
 .DS_Store
