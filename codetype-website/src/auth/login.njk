@@ -253,7 +253,7 @@ breadcrumb:
     if (isFromExtension) {
       // Redirect to VS Code
       successMessage.textContent = 'Redirecting back to VS Code...';
-      window.location.href = `vscode://codetype.codetype/auth-callback?token=${encodeURIComponent(token)}`;
+      window.location.href = `vscode://thisisnsh.codetype/auth-callback?token=${encodeURIComponent(token)}`;
     } else {
       // Redirect to dashboard
       successMessage.textContent = 'Redirecting to dashboard...';

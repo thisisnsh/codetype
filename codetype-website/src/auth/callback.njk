@@ -73,7 +73,7 @@ breadcrumb:
         if (source === 'extension') {
           const token = await result.user.getIdToken();
           successMessage.textContent = 'Redirecting back to VS Code...';
-          window.location.href = `vscode://codetype.codetype/auth-callback?token=${encodeURIComponent(token)}`;
+          window.location.href = `vscode://thisisnsh.codetype/auth-callback?token=${encodeURIComponent(token)}`;
         } else {
           successMessage.textContent = 'Redirecting to dashboard...';
           setTimeout(() => {
