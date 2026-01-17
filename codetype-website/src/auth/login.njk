@@ -93,10 +93,7 @@ breadcrumb:
     GoogleAuthProvider,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    setPersistence,
-    browserLocalPersistence,
-    inMemoryPersistence
+    onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const API_BASE = window.API_BASE;
@@ -107,11 +104,9 @@ breadcrumb:
   const source = urlParams.get('source');
   const isFromExtension = source === 'extension';
 
-  // Initialize Firebase
+  // Initialize Firebase (uses default localStorage persistence)
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  // Use in-memory for extension (token passed via URL), local storage for web
-  setPersistence(auth, isFromExtension ? inMemoryPersistence : browserLocalPersistence);
   const googleProvider = new GoogleAuthProvider();
 
   // UI Elements
