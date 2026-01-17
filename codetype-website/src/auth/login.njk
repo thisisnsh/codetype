@@ -11,7 +11,7 @@ breadcrumb:
 
 <div class="auth-container">
   <div class="auth-card">
-    <div class="auth-header">
+    <div id="main-auth-header" class="auth-header">
       <h1 class="auth-title">Sign In to CodeType</h1>
       <p class="auth-subtitle">Track your progress, save stats,<br>and maintain your streak.</p>
     </div>
@@ -58,8 +58,10 @@ breadcrumb:
 
     <!-- Username Setup (shown after first login) -->
     <div id="username-setup" class="username-setup" style="display: none;">
-      <h2>Choose a Username</h2>
-      <p>This will be displayed on your profile.</p>
+      <div class="auth-header">
+        <h1 class="auth-title">Create Profile</h1>
+        <p class="auth-subtitle">Choose a username to complete<br>your CodeType profile.</p>
+      </div>
       <form id="username-form">
         <div class="form-group">
           <label for="username">Username</label>
@@ -67,7 +69,7 @@ breadcrumb:
           <small>2-20 characters, letters, numbers, underscore, hyphen</small>
         </div>
         <div id="username-error" class="form-error" style="display: none;"></div>
-        <button type="submit" class="btn btn-primary btn-full">Continue</button>
+        <button type="submit" class="btn btn-primary btn-full">Create</button>
       </form>
     </div>
 
@@ -110,6 +112,7 @@ breadcrumb:
   const googleProvider = new GoogleAuthProvider();
 
   // UI Elements
+  const mainAuthHeader = document.getElementById('main-auth-header');
   const loadingEl = document.getElementById('auth-loading');
   const formEl = document.getElementById('auth-form');
   const usernameSetupEl = document.getElementById('username-setup');
@@ -230,6 +233,7 @@ breadcrumb:
 
       if (data.needsUsername) {
         // Show username setup
+        mainAuthHeader.style.display = 'none';
         loadingEl.style.display = 'none';
         usernameSetupEl.style.display = 'block';
         authInProgress = false;
@@ -246,6 +250,7 @@ breadcrumb:
   }
 
   function completeAuth(user, token) {
+    mainAuthHeader.style.display = 'none';
     loadingEl.style.display = 'none';
     usernameSetupEl.style.display = 'none';
     successEl.style.display = 'block';
