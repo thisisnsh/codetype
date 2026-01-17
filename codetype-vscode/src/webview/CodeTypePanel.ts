@@ -448,13 +448,11 @@ export class CodeTypePanel {
 
         /* Welcome screen - VS Code Getting Started style */
         .welcome-shell {
-            --welcome-offset: clamp(-140px, -14vh, -72px);
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 24px 52px 56px;
+            padding: 100px 0px 24px;
             overflow-y: auto;
         }
 
@@ -463,8 +461,8 @@ export class CodeTypePanel {
             max-width: 882px;
             display: flex;
             flex-direction: column;
+            flex: 1;
             gap: 20px;
-            transform: translateY(var(--welcome-offset));
         }
 
         .welcome-header {
@@ -760,8 +758,9 @@ export class CodeTypePanel {
             flex-wrap: wrap;
             font-size: 13px;
             color: var(--vscode-descriptionForeground);
-            margin-top: 64px;
-            padding-top: 16px;
+            margin-top: auto;
+            padding-top: 24px;
+            padding-bottom: 24px;
         }
 
         .welcome-footer a,
@@ -792,7 +791,7 @@ export class CodeTypePanel {
 
         @media (max-width: 600px) {
             .welcome-shell {
-                padding: 20px 24px 48px;
+                padding: 40px 40px 20px;
             }
 
             .welcome-grid {
@@ -1367,16 +1366,6 @@ export class CodeTypePanel {
                                         \${recentHtml}
                                     </div>
                                 </div>
-                                <div class="welcome-footer">
-                                    <span class="footer-author">Created by Nishant Hada</span>
-                                    <span class="footer-separator">·</span>
-                                    <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">Star on GitHub</a>
-                                    <span class="footer-separator">·</span>
-                                    <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
-                                    \${isAuthenticated && user
-                                        ? \`<span class="footer-separator">·</span><span>Signed in as \${user.username || user.displayName || 'User'}</span><span class="footer-separator">·</span><button onclick="logout()">Sign out</button>\`
-                                        : ''}
-                                </div>
                             </div>
                             <div class="welcome-column">
                                 <div class="welcome-section">
@@ -1411,6 +1400,13 @@ export class CodeTypePanel {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                        <div class="welcome-footer">
+                            <span class="footer-author">Created by Nishant Hada</span>
+                            <span class="footer-separator">·</span>
+                            <a href="https://github.com/thisisnsh/codetype" target="_blank" rel="noopener">Star on GitHub</a>
+                            <span class="footer-separator">·</span>
+                            <a href="https://github.com/thisisnsh/codetype/blob/main/LICENSE" target="_blank" rel="noopener">MIT License</a>
                         </div>
                     </div>
                 </div>
