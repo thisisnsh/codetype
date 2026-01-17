@@ -9,16 +9,16 @@ export interface GameResult {
     wpm: number;
     accuracy: number;
     time: number;
-    characters: number;
-    errors: number;
+    charsTyped: number;
+    totalChars: number;
     language?: string;
 }
 
 export interface UserStats {
     totalGamesPlayed: number;
-    totalWpm: number;
-    bestWpm: number;
     avgWpm: number;
+    bestWpm: number;
+    totalCharsTyped: number;
     currentStreak: number;
     longestStreak: number;
 }
@@ -30,15 +30,13 @@ export interface StreakData {
     totalActiveDays: number;
 }
 
-export interface GameDocument {
-    id: string;
+export interface RecentSession {
+    epochKey: string;
     wpm: number;
     accuracy: number;
-    time: number;
-    characters: number;
-    errors: number;
-    playedAt: number;
-    date: string;
+    charsTyped: number;
+    totalChars: number;
+    createdAt: number;
 }
 
 export class ApiClient {
@@ -90,6 +88,7 @@ export class ApiClient {
                 if (response.ok) {
                     const data = await response.json() as {
                         success: boolean;
+                        sessionKey?: string;
                         updatedStats?: {
                             totalGamesPlayed: number;
                             avgWpm: number;
@@ -149,8 +148,8 @@ export class ApiClient {
 
             if (!response.ok) return null;
 
-            const data = await response.json() as { user: UserStats };
-            return data.user;
+            const data = await response.json() as { stats: UserStats };
+            return data.stats;
         } catch (error) {
             console.error('Failed to fetch user stats:', error);
             return null;
@@ -185,20 +184,18 @@ export class ApiClient {
     }
 
     /**
-     * Get recent games for authenticated user
+     * Get recent sessions for authenticated user
      */
-    async getRecentGames(): Promise<GameDocument[]> {
+    async getRecentGames(): Promise<RecentSession[]> {
         if (OFFLINE_MODE || !this.authService.isAuthenticated()) {
             const localStats = this.getLocalStats();
             return (localStats.games || []).slice(-20).reverse().map((g: any, i: number) => ({
-                id: `local-${i}`,
+                epochKey: `local-${i}`,
                 wpm: g.wpm,
                 accuracy: g.accuracy,
-                time: g.time,
-                characters: g.characters,
-                errors: g.errors,
-                playedAt: g.timestamp,
-                date: new Date(g.timestamp).toISOString().split('T')[0]
+                charsTyped: g.charsTyped || 0,
+                totalChars: g.totalChars || 0,
+                createdAt: g.timestamp
             }));
         }
 
@@ -213,8 +210,8 @@ export class ApiClient {
 
             if (!response.ok) return [];
 
-            const data = await response.json() as { recentGames: GameDocument[] };
-            return data.recentGames || [];
+            const data = await response.json() as { recentSessions: RecentSession[] };
+            return data.recentSessions || [];
         } catch (error) {
             console.error('Failed to fetch recent games:', error);
             return [];

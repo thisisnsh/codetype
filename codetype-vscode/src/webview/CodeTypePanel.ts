@@ -1644,8 +1644,8 @@ export class CodeTypePanel {
                 wpm: calculateWPM(),
                 accuracy: Math.round((state.currentPos / (state.currentPos + state.errors)) * 100),
                 time: (Date.now() - state.startTime) / 1000,
-                characters: state.code.length,
-                errors: state.errors
+                charsTyped: state.currentPos,
+                totalChars: state.code.length
             };
             vscode.postMessage({ type: 'gameFinished', result });
         }
@@ -1667,8 +1667,8 @@ export class CodeTypePanel {
                                 <div class="result-stat-label">Time</div>
                             </div>
                             <div class="result-stat">
-                                <div class="result-stat-value">\${result.errors}</div>
-                                <div class="result-stat-label">Errors</div>
+                                <div class="result-stat-value">\${result.charsTyped}</div>
+                                <div class="result-stat-label">Characters</div>
                             </div>
                         </div>
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--vscode-panel-border);">
@@ -2192,19 +2192,21 @@ export class CodeTypePanel {
             if (state.wsConnection) {
                 const progress = Math.round((state.currentPos / state.code.length) * 100);
                 const wpm = calculateWPM();
+                const accuracy = state.currentPos > 0 ? Math.round((state.currentPos / (state.currentPos + state.errors)) * 100) : 100;
                 state.wsConnection.send(JSON.stringify({
                     type: 'progress',
-                    data: { progress, wpm }
+                    data: { progress, wpm, accuracy, charsTyped: state.currentPos }
                 }));
             }
         }
 
         function finishMultiplayerGame() {
             const wpm = calculateWPM();
+            const accuracy = state.currentPos > 0 ? Math.round((state.currentPos / (state.currentPos + state.errors)) * 100) : 100;
             if (state.wsConnection) {
                 state.wsConnection.send(JSON.stringify({
                     type: 'finish',
-                    data: { wpm }
+                    data: { wpm, accuracy, charsTyped: state.currentPos }
                 }));
             }
         }

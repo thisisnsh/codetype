@@ -139,13 +139,14 @@ breadcrumb:
 
       if (statsResponse.ok) {
         const data = await statsResponse.json();
-        document.getElementById('stat-games').textContent = data.user.totalGamesPlayed || 0;
-        document.getElementById('stat-avg-wpm').textContent = data.user.avgWpm || 0;
-        document.getElementById('stat-best-wpm').textContent = data.user.bestWpm || 0;
-        document.getElementById('stat-streak').textContent = data.user.currentStreak || 0;
+        // Stats are now in data.stats instead of data.user
+        document.getElementById('stat-games').textContent = data.stats.totalGamesPlayed || 0;
+        document.getElementById('stat-avg-wpm').textContent = data.stats.avgWpm || 0;
+        document.getElementById('stat-best-wpm').textContent = data.stats.bestWpm || 0;
+        document.getElementById('stat-streak').textContent = data.stats.currentStreak || 0;
 
-        // Render recent games
-        renderRecentGames(data.recentGames || []);
+        // Render recent sessions (now using recentSessions array)
+        renderRecentGames(data.recentSessions || []);
       }
 
       // Fetch streak data
@@ -267,24 +268,26 @@ breadcrumb:
     container.appendChild(grid);
   }
 
-  function renderRecentGames(games) {
+  function renderRecentGames(sessions) {
     const container = document.getElementById('recent-games');
 
-    if (games.length === 0) {
+    if (sessions.length === 0) {
       container.innerHTML = '<p class="no-games">No games played yet. Open the extension and start typing!</p>';
       return;
     }
 
-    container.innerHTML = games.map(game => {
-      const date = new Date(game.playedAt);
+    container.innerHTML = sessions.map(session => {
+      // Parse epoch key or use createdAt for date display
+      const timestamp = session.createdAt || parseInt(session.epochKey, 10);
+      const date = new Date(timestamp);
       const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const timeStr = date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
       return `
         <div class="game-item">
           <div class="game-stats">
-            <span class="game-wpm">${game.wpm} WPM</span>
-            <span class="game-accuracy">${game.accuracy}% accuracy</span>
+            <span class="game-wpm">${session.wpm} WPM</span>
+            <span class="game-accuracy">${session.accuracy}% accuracy</span>
           </div>
           <div class="game-meta">
             <span class="game-date">${dateStr} at ${timeStr}</span>

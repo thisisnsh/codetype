@@ -1,43 +1,40 @@
 // Firestore document interfaces
 
+export interface SoloSession {
+  wpm: number;
+  accuracy: number;
+  charsTyped: number;    // Characters actually typed
+  totalChars: number;    // Total chars in snippet (for completion %)
+  createdAt: number;     // Firebase Timestamp or epoch ms
+}
+
+export interface TeamSession {
+  wpm: Record<string, number>;       // {uid: wpm}
+  accuracy: Record<string, number>;  // {uid: accuracy}
+  charsTyped: Record<string, number>;   // {uid: charsTyped}
+  totalChars: number;                // Same snippet for all
+  createdAt: number;     // Firebase Timestamp or epoch ms
+}
+
 export interface UserDocument {
   uid: string;
   email: string;
   displayName: string;
   username: string;
   photoURL?: string;
-  createdAt: number;
-  lastLoginAt: number;
-  totalGamesPlayed: number;
-  totalWpm: number;
-  bestWpm: number;
-  avgWpm: number;
-  totalCharacters: number;
-  totalErrors: number;
-  currentStreak: number;
-  longestStreak: number;
-  lastPlayedDate: string; // YYYY-MM-DD
-}
-
-export interface GameDocument {
-  id: string;
-  userId: string;
-  wpm: number;
-  accuracy: number;
-  time: number;
-  characters: number;
-  errors: number;
-  language?: string;
-  playedAt: number;
-  date: string; // YYYY-MM-DD
-}
-
-export interface ActivityDocument {
-  userId: string;
-  date: string; // YYYY-MM-DD
-  gamesPlayed: number;
-  totalWpm: number;
-  bestWpm: number;
+  createdAt: number;     // Firebase Timestamp or epoch ms
+  lastPlayedAt: number;  // Firebase Timestamp or epoch ms
+  sessions: {
+    solo: {
+      // Key: epoch ms as string (e.g., "1705500000000") - sortable
+      [epochKey: string]: SoloSession;
+    };
+    team: {
+      // Key: "epochMs_ROOMCODE" (e.g., "1705500000000_ABC123")
+      // Stored in EACH participant's document
+      [epochKey: string]: TeamSession;
+    };
+  };
 }
 
 export interface RoomDocument {
@@ -78,14 +75,14 @@ export interface SubmitGameRequest {
   wpm: number;
   accuracy: number;
   time: number;
-  characters: number;
-  errors: number;
+  charsTyped: number;
+  totalChars: number;
   language?: string;
 }
 
 export interface SubmitGameResponse {
   success: boolean;
-  gameId: string;
+  sessionKey: string;
   updatedStats: {
     totalGamesPlayed: number;
     avgWpm: number;
@@ -94,9 +91,29 @@ export interface SubmitGameResponse {
   };
 }
 
+// Calculated stats derived from sessions
+export interface CalculatedStats {
+  totalGamesPlayed: number;
+  avgWpm: number;
+  bestWpm: number;
+  totalCharsTyped: number;
+  currentStreak: number;
+  longestStreak: number;
+}
+
+// Recent session with epoch key for display
+export interface RecentSession {
+  epochKey: string;
+  wpm: number;
+  accuracy: number;
+  charsTyped: number;
+  totalChars: number;
+  createdAt: number;
+}
+
 export interface UserStatsResponse {
-  user: UserDocument;
-  recentGames: GameDocument[];
+  stats: CalculatedStats;
+  recentSessions: RecentSession[];
 }
 
 export interface StreaksResponse {

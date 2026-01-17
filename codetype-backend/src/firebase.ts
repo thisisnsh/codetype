@@ -1,11 +1,13 @@
 import type {
   DecodedToken,
   UserDocument,
-  GameDocument,
-  ActivityDocument,
+  SoloSession,
+  TeamSession,
   RoomDocument,
   FirebaseConfig,
   Env,
+  CalculatedStats,
+  RecentSession,
 } from './types';
 
 import { initializeApp, type FirebaseApp } from 'firebase/app';
@@ -16,7 +18,6 @@ import {
   doc,
   getDoc,
   setDoc,
-  addDoc,
   getDocs,
   query,
   where,
@@ -317,17 +318,6 @@ export async function firestoreSet(
   await setDoc(doc(db, collectionName, docId), data);
 }
 
-export async function firestoreAdd(
-  env: Env,
-  collectionName: string,
-  data: Record<string, any>
-): Promise<string> {
-  await ensureServiceAuth(env);
-  const db = getFirestoreClient(env);
-  const ref = await addDoc(collection(db, collectionName), data);
-  return ref.id;
-}
-
 export async function firestoreQuery<T>(
   env: Env,
   collectionName: string,
@@ -382,110 +372,239 @@ function mapFirestoreOp(
 }
 
 /**
- * Calculate and update streak for a user
+ * Generate a session key (epoch ms as string)
  */
-export async function updateStreak(
+export function generateSessionKey(): string {
+  return Date.now().toString();
+}
+
+/**
+ * Add a solo session to a user's document
+ */
+export async function addSoloSession(
   env: Env,
   userId: string,
-  gameDate: string // YYYY-MM-DD
-): Promise<{ currentStreak: number; longestStreak: number }> {
+  session: SoloSession
+): Promise<string> {
   const user = await firestoreGet<UserDocument>(env, 'users', userId);
-
   if (!user) {
     throw new Error('User not found');
   }
 
-  const lastPlayedDate = user.lastPlayedDate;
-  let currentStreak = user.currentStreak || 0;
-  let longestStreak = user.longestStreak || 0;
+  const sessionKey = generateSessionKey();
+  const updatedUser: UserDocument = {
+    ...user,
+    lastPlayedAt: session.createdAt,
+    sessions: {
+      ...user.sessions,
+      solo: {
+        ...user.sessions.solo,
+        [sessionKey]: session,
+      },
+    },
+  };
 
-  if (!lastPlayedDate) {
-    currentStreak = 1;
-  } else if (lastPlayedDate === gameDate) {
-    // Already played today, no streak change
-  } else {
-    const lastDate = new Date(lastPlayedDate);
-    const currentDate = new Date(gameDate);
-    const diffTime = currentDate.getTime() - lastDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  await firestoreSet(env, 'users', userId, updatedUser);
+  return sessionKey;
+}
 
-    if (diffDays === 1) {
-      currentStreak++;
-    } else if (diffDays > 1) {
-      currentStreak = 1;
+/**
+ * Add a team session to each participant's document
+ */
+export async function addTeamSession(
+  env: Env,
+  roomCode: string,
+  participantIds: string[],
+  session: TeamSession
+): Promise<string> {
+  const sessionKey = `${Date.now()}_${roomCode}`;
+
+  for (const participantId of participantIds) {
+    const user = await firestoreGet<UserDocument>(env, 'users', participantId);
+    if (!user) {
+      continue; // Skip if user not found
+    }
+
+    const updatedUser: UserDocument = {
+      ...user,
+      lastPlayedAt: session.createdAt,
+      sessions: {
+        ...user.sessions,
+        team: {
+          ...user.sessions.team,
+          [sessionKey]: session,
+        },
+      },
+    };
+
+    await firestoreSet(env, 'users', participantId, updatedUser);
+  }
+
+  return sessionKey;
+}
+
+/**
+ * Calculate stats from a user's sessions
+ */
+export function calculateStatsFromSessions(user: UserDocument): CalculatedStats {
+  const soloSessions = Object.values(user.sessions?.solo || {});
+
+  if (soloSessions.length === 0) {
+    return {
+      totalGamesPlayed: 0,
+      avgWpm: 0,
+      bestWpm: 0,
+      totalCharsTyped: 0,
+      currentStreak: 0,
+      longestStreak: 0,
+    };
+  }
+
+  const totalGamesPlayed = soloSessions.length;
+  const totalWpm = soloSessions.reduce((sum, s) => sum + s.wpm, 0);
+  const avgWpm = Math.round(totalWpm / totalGamesPlayed);
+  const bestWpm = Math.max(...soloSessions.map(s => s.wpm));
+  const totalCharsTyped = soloSessions.reduce((sum, s) => sum + s.charsTyped, 0);
+
+  const streaks = calculateStreaks(user);
+
+  return {
+    totalGamesPlayed,
+    avgWpm,
+    bestWpm,
+    totalCharsTyped,
+    currentStreak: streaks.currentStreak,
+    longestStreak: streaks.longestStreak,
+  };
+}
+
+/**
+ * Calculate streaks from session keys
+ * Converts epoch keys to dates, finds consecutive days
+ */
+export function calculateStreaks(user: UserDocument): { currentStreak: number; longestStreak: number } {
+  const soloSessions = user.sessions?.solo || {};
+  const epochKeys = Object.keys(soloSessions);
+
+  if (epochKeys.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 };
+  }
+
+  // Convert epoch keys to unique dates (YYYY-MM-DD)
+  const uniqueDates = new Set<string>();
+  for (const epochKey of epochKeys) {
+    const epochMs = parseInt(epochKey, 10);
+    if (!isNaN(epochMs)) {
+      const date = new Date(epochMs);
+      uniqueDates.add(date.toISOString().split('T')[0]);
     }
   }
 
-  longestStreak = Math.max(longestStreak, currentStreak);
+  // Sort dates
+  const sortedDates = Array.from(uniqueDates).sort();
 
-  await firestoreSet(env, 'users', userId, {
-    ...user,
-    lastPlayedDate: gameDate,
-    currentStreak,
-    longestStreak,
-  });
-
-  return { currentStreak, longestStreak };
-}
-
-/**
- * Update or create activity document for heatmap
- */
-export async function updateActivity(
-  env: Env,
-  userId: string,
-  gameDate: string,
-  wpm: number
-): Promise<ActivityDocument> {
-  const activityId = `${userId}_${gameDate}`;
-
-  let activity = await firestoreGet<ActivityDocument>(env, 'activity', activityId);
-
-  if (activity) {
-    activity = {
-      ...activity,
-      gamesPlayed: activity.gamesPlayed + 1,
-      totalWpm: activity.totalWpm + wpm,
-      bestWpm: Math.max(activity.bestWpm, wpm),
-    };
-  } else {
-    activity = {
-      userId,
-      date: gameDate,
-      gamesPlayed: 1,
-      totalWpm: wpm,
-      bestWpm: wpm,
-    };
+  if (sortedDates.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 };
   }
 
-  await firestoreSet(env, 'activity', activityId, activity);
-  return activity;
+  let longestStreak = 1;
+  let currentStreakCount = 1;
+  let tempStreak = 1;
+
+  // Calculate longest streak
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prevDate = new Date(sortedDates[i - 1]);
+    const currDate = new Date(sortedDates[i]);
+    const diffTime = currDate.getTime() - prevDate.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 1) {
+      tempStreak++;
+    } else {
+      tempStreak = 1;
+    }
+
+    longestStreak = Math.max(longestStreak, tempStreak);
+  }
+
+  // Calculate current streak (from today backwards)
+  const today = new Date().toISOString().split('T')[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+  // Check if played today or yesterday
+  const lastPlayedDate = sortedDates[sortedDates.length - 1];
+  if (lastPlayedDate !== today && lastPlayedDate !== yesterday) {
+    // Streak is broken
+    currentStreakCount = 0;
+  } else {
+    // Count backwards from last played date
+    currentStreakCount = 1;
+    for (let i = sortedDates.length - 2; i >= 0; i--) {
+      const prevDate = new Date(sortedDates[i]);
+      const currDate = new Date(sortedDates[i + 1]);
+      const diffTime = currDate.getTime() - prevDate.getTime();
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        currentStreakCount++;
+      } else {
+        break;
+      }
+    }
+  }
+
+  return { currentStreak: currentStreakCount, longestStreak };
 }
 
 /**
- * Get activity data for a year (for streak heatmap)
+ * Get recent sessions sorted by epoch key (most recent first)
  */
-export async function getYearActivity(
-  env: Env,
-  userId: string,
+export function getRecentSessions(user: UserDocument, limit: number = 20): RecentSession[] {
+  const soloSessions = user.sessions?.solo || {};
+  const epochKeys = Object.keys(soloSessions).sort((a, b) => parseInt(b, 10) - parseInt(a, 10));
+
+  return epochKeys.slice(0, limit).map(epochKey => {
+    const session = soloSessions[epochKey];
+    return {
+      epochKey,
+      wpm: session.wpm,
+      accuracy: session.accuracy,
+      charsTyped: session.charsTyped,
+      totalChars: session.totalChars,
+      createdAt: session.createdAt,
+    };
+  });
+}
+
+/**
+ * Get year activity from sessions (for streak heatmap)
+ * Groups sessions by date and counts games per day
+ */
+export function getYearActivityFromSessions(
+  user: UserDocument,
   year: number
-): Promise<Record<string, ActivityDocument>> {
-  const startDate = `${year}-01-01`;
-  const endDate = `${year}-12-31`;
+): Record<string, { gamesPlayed: number; totalWpm: number; bestWpm: number }> {
+  const soloSessions = user.sessions?.solo || {};
+  const result: Record<string, { gamesPlayed: number; totalWpm: number; bestWpm: number }> = {};
 
-  const activities = await firestoreQuery<ActivityDocument>(
-    env,
-    'activity',
-    [
-      { field: 'userId', op: 'EQUAL', value: userId },
-      { field: 'date', op: 'GREATER_THAN_OR_EQUAL', value: startDate },
-      { field: 'date', op: 'LESS_THAN_OR_EQUAL', value: endDate },
-    ]
-  );
+  const startOfYear = new Date(year, 0, 1).getTime();
+  const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999).getTime();
 
-  const result: Record<string, ActivityDocument> = {};
-  for (const activity of activities) {
-    result[activity.date] = activity;
+  for (const [epochKey, session] of Object.entries(soloSessions)) {
+    const epochMs = parseInt(epochKey, 10);
+    if (isNaN(epochMs) || epochMs < startOfYear || epochMs > endOfYear) {
+      continue;
+    }
+
+    const date = new Date(epochMs).toISOString().split('T')[0];
+
+    if (!result[date]) {
+      result[date] = { gamesPlayed: 0, totalWpm: 0, bestWpm: 0 };
+    }
+
+    result[date].gamesPlayed++;
+    result[date].totalWpm += session.wpm;
+    result[date].bestWpm = Math.max(result[date].bestWpm, session.wpm);
   }
 
   return result;
@@ -522,26 +641,6 @@ export async function setUser(
   data: UserDocument
 ): Promise<void> {
   await firestoreSet(env, 'users', uid, data);
-}
-
-export async function getRecentGames(
-  env: Env,
-  uid: string
-): Promise<GameDocument[]> {
-  return firestoreQuery<GameDocument>(
-    env,
-    'games',
-    [{ field: 'userId', op: 'EQUAL', value: uid }],
-    { field: 'playedAt', direction: 'DESCENDING' },
-    20
-  );
-}
-
-export async function addGame(
-  env: Env,
-  data: Omit<GameDocument, 'id'>
-): Promise<string> {
-  return firestoreAdd(env, 'games', data);
 }
 
 /**

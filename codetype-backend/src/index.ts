@@ -2,7 +2,8 @@ import type {
   Env,
   DecodedToken,
   UserDocument,
-  GameDocument,
+  SoloSession,
+  TeamSession,
   VerifyTokenRequest,
   VerifyTokenResponse,
   RegisterRequest,
@@ -17,14 +18,15 @@ import {
   verifyIdToken,
   firestoreGet,
   firestoreSet,
-  firestoreAdd,
-  firestoreQuery,
-  updateStreak,
-  updateActivity,
-  getYearActivity,
   isUsernameAvailable,
   createRoom,
   isRoomCodeTaken,
+  addSoloSession,
+  addTeamSession,
+  calculateStatsFromSessions,
+  calculateStreaks,
+  getRecentSessions,
+  getYearActivityFromSessions,
 } from './firebase';
 
 import type { RoomDocument } from './types';
@@ -140,10 +142,6 @@ function generateRoomCode(): string {
   return code;
 }
 
-function getTodayDate(): string {
-  return new Date().toISOString().split('T')[0];
-}
-
 function normalizeUsername(username: string): string {
   return username.trim().toLowerCase();
 }
@@ -212,11 +210,11 @@ function validateGamePayload(body: SubmitGameRequest): string | null {
   if (body.time !== undefined && (!Number.isFinite(body.time) || body.time < 0)) {
     return 'Invalid time';
   }
-  if (body.characters !== undefined && (!Number.isFinite(body.characters) || body.characters < 0)) {
-    return 'Invalid characters';
+  if (body.charsTyped !== undefined && (!Number.isFinite(body.charsTyped) || body.charsTyped < 0)) {
+    return 'Invalid charsTyped';
   }
-  if (body.errors !== undefined && (!Number.isFinite(body.errors) || body.errors < 0)) {
-    return 'Invalid errors';
+  if (body.totalChars !== undefined && (!Number.isFinite(body.totalChars) || body.totalChars < 0)) {
+    return 'Invalid totalChars';
   }
   return null;
 }
@@ -318,7 +316,6 @@ export default {
               ...existingUser,
               username: normalized,
               displayName: authUser.name || normalized,
-              lastLoginAt: now,
             }
           : {
               uid: authUser.uid,
@@ -327,16 +324,11 @@ export default {
               username: normalized,
               photoURL: authUser.picture,
               createdAt: now,
-              lastLoginAt: now,
-              totalGamesPlayed: 0,
-              totalWpm: 0,
-              bestWpm: 0,
-              avgWpm: 0,
-              totalCharacters: 0,
-              totalErrors: 0,
-              currentStreak: 0,
-              longestStreak: 0,
-              lastPlayedDate: '',
+              lastPlayedAt: 0,
+              sessions: {
+                solo: {},
+                team: {},
+              },
             };
 
         await firestoreSet(env, 'users', authUser.uid, userData);
@@ -356,17 +348,12 @@ export default {
           return jsonResponse(request, env, { error: 'User not found' }, 404);
         }
 
-        const recentGames = await firestoreQuery<GameDocument>(
-          env,
-          'games',
-          [{ field: 'userId', op: 'EQUAL', value: uid }],
-          { field: 'playedAt', direction: 'DESCENDING' },
-          20
-        );
+        const stats = calculateStatsFromSessions(user);
+        const recentSessions = getRecentSessions(user, 20);
 
         const response: UserStatsResponse = {
-          user,
-          recentGames,
+          stats,
+          recentSessions,
         };
 
         return jsonResponse(request, env, response);
@@ -390,23 +377,13 @@ export default {
           return jsonResponse(request, env, { error: 'User not found' }, 404);
         }
 
-        const activities = await getYearActivity(env, uid, year);
-        const activitiesMap: Record<
-          string,
-          { gamesPlayed: number; totalWpm: number; bestWpm: number }
-        > = {};
-        for (const [date, activity] of Object.entries(activities)) {
-          activitiesMap[date] = {
-            gamesPlayed: activity.gamesPlayed,
-            totalWpm: activity.totalWpm,
-            bestWpm: activity.bestWpm,
-          };
-        }
+        const activities = getYearActivityFromSessions(user, year);
+        const streaks = calculateStreaks(user);
 
         const response: StreaksResponse = {
-          activities: activitiesMap,
-          currentStreak: user.currentStreak,
-          longestStreak: user.longestStreak,
+          activities,
+          currentStreak: streaks.currentStreak,
+          longestStreak: streaks.longestStreak,
           totalActiveDays: Object.keys(activities).length,
         };
 
@@ -438,52 +415,34 @@ export default {
           return jsonResponse(request, env, { error: validationError }, 400);
         }
 
-        const today = getTodayDate();
         const user = await firestoreGet<UserDocument>(env, 'users', authUser.uid);
         if (!user) {
           return jsonResponse(request, env, { error: 'User not registered' }, 400);
         }
 
-        const gameData: Omit<GameDocument, 'id'> = {
-          userId: authUser.uid,
+        const now = Date.now();
+        const session: SoloSession = {
           wpm: body.wpm,
           accuracy: body.accuracy,
-          time: body.time || 0,
-          characters: body.characters || 0,
-          errors: body.errors || 0,
-          language: body.language,
-          playedAt: Date.now(),
-          date: today,
+          charsTyped: body.charsTyped || 0,
+          totalChars: body.totalChars || 0,
+          createdAt: now,
         };
 
-        const gameId = await firestoreAdd(env, 'games', gameData);
+        const sessionKey = await addSoloSession(env, authUser.uid, session);
 
-        const newTotalGames = user.totalGamesPlayed + 1;
-        const newTotalWpm = user.totalWpm + body.wpm;
-        const newBestWpm = Math.max(user.bestWpm, body.wpm);
-        const newAvgWpm = Math.round(newTotalWpm / newTotalGames);
-
-        await firestoreSet(env, 'users', authUser.uid, {
-          ...user,
-          totalGamesPlayed: newTotalGames,
-          totalWpm: newTotalWpm,
-          bestWpm: newBestWpm,
-          avgWpm: newAvgWpm,
-          totalCharacters: user.totalCharacters + (body.characters || 0),
-          totalErrors: user.totalErrors + (body.errors || 0),
-        });
-
-        const { currentStreak } = await updateStreak(env, authUser.uid, today);
-        await updateActivity(env, authUser.uid, today, body.wpm);
+        // Fetch updated user to calculate new stats
+        const updatedUser = await firestoreGet<UserDocument>(env, 'users', authUser.uid);
+        const stats = calculateStatsFromSessions(updatedUser!);
 
         const response: SubmitGameResponse = {
           success: true,
-          gameId,
+          sessionKey,
           updatedStats: {
-            totalGamesPlayed: newTotalGames,
-            avgWpm: newAvgWpm,
-            bestWpm: newBestWpm,
-            currentStreak,
+            totalGamesPlayed: stats.totalGamesPlayed,
+            avgWpm: stats.avgWpm,
+            bestWpm: stats.bestWpm,
+            currentStreak: stats.currentStreak,
           },
         };
 
@@ -556,6 +515,8 @@ export default {
 
 export class GameRoom {
   private state: DurableObjectState;
+  private env: Env | null = null;
+  private roomCode: string = '';
   private sessions: Map<WebSocket, { userId: string; username: string }> = new Map();
   private players: Map<
     string,
@@ -563,6 +524,8 @@ export class GameRoom {
       username: string;
       progress: number;
       wpm: number;
+      accuracy: number;
+      charsTyped: number;
       finished: boolean;
       finishTime?: number;
     }
@@ -572,12 +535,19 @@ export class GameRoom {
   private codeSnippet = '';
   private gameStartTime = 0;
 
-  constructor(state: DurableObjectState) {
+  constructor(state: DurableObjectState, env: Env) {
     this.state = state;
+    this.env = env;
   }
 
   async fetch(request: Request): Promise<Response> {
     const url = new URL(request.url);
+
+    // Extract room code from the original path
+    const roomCodeMatch = url.pathname.match(/\/rooms\/([A-Z0-9]+)\/ws/);
+    if (roomCodeMatch) {
+      this.roomCode = roomCodeMatch[1];
+    }
 
     if (url.pathname === '/websocket') {
       if (request.headers.get('Upgrade') !== 'websocket') {
@@ -613,6 +583,8 @@ export class GameRoom {
       username,
       progress: 0,
       wpm: 0,
+      accuracy: 100,
+      charsTyped: 0,
       finished: false,
     });
 
@@ -640,7 +612,7 @@ export class GameRoom {
       this.players.delete(userId);
 
       if (userId === this.hostId && this.players.size > 0) {
-        this.hostId = this.players.keys().next().value;
+        this.hostId = this.players.keys().next().value!;
       }
 
       this.broadcast('playerLeft', {
@@ -676,6 +648,8 @@ export class GameRoom {
         if (player && this.gameStatus === 'playing') {
           player.progress = message.data.progress;
           player.wpm = message.data.wpm;
+          player.accuracy = message.data.accuracy || 100;
+          player.charsTyped = message.data.charsTyped || 0;
 
           this.broadcast('progress', {
             players: this.getPlayersList(),
@@ -690,6 +664,8 @@ export class GameRoom {
           finishingPlayer.finishTime = Date.now() - this.gameStartTime;
           finishingPlayer.progress = 100;
           finishingPlayer.wpm = message.data.wpm;
+          finishingPlayer.accuracy = message.data.accuracy || 100;
+          finishingPlayer.charsTyped = message.data.charsTyped || 0;
 
           this.broadcast('playerFinished', {
             userId,
@@ -701,6 +677,10 @@ export class GameRoom {
           const allFinished = Array.from(this.players.values()).every((p) => p.finished);
           if (allFinished) {
             this.gameStatus = 'finished';
+
+            // Store team session for each participant
+            await this.storeTeamSession();
+
             this.broadcast('gameEnd', {
               results: this.getResults(),
             });
@@ -710,6 +690,35 @@ export class GameRoom {
           }
         }
         break;
+    }
+  }
+
+  private async storeTeamSession() {
+    if (!this.env || !this.roomCode) return;
+
+    const participantIds = Array.from(this.players.keys());
+    const wpmMap: Record<string, number> = {};
+    const accuracyMap: Record<string, number> = {};
+    const charsTypedMap: Record<string, number> = {};
+
+    for (const [id, player] of this.players.entries()) {
+      wpmMap[id] = player.wpm;
+      accuracyMap[id] = player.accuracy;
+      charsTypedMap[id] = player.charsTyped;
+    }
+
+    const session: TeamSession = {
+      wpm: wpmMap,
+      accuracy: accuracyMap,
+      charsTyped: charsTypedMap,
+      totalChars: this.codeSnippet.length,
+      createdAt: Date.now(),
+    };
+
+    try {
+      await addTeamSession(this.env, this.roomCode, participantIds, session);
+    } catch (error) {
+      console.error('Failed to store team session:', error);
     }
   }
 
@@ -743,6 +752,8 @@ export class GameRoom {
     for (const player of this.players.values()) {
       player.progress = 0;
       player.wpm = 0;
+      player.accuracy = 100;
+      player.charsTyped = 0;
       player.finished = false;
       player.finishTime = undefined;
     }
