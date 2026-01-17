@@ -1518,6 +1518,32 @@ export class CodeTypePanel {
             }
         }
 
+        function normalizeIndentation(code) {
+            const lines = code.split('\\n');
+            // Find minimum indentation (excluding empty lines)
+            let minIndent = Infinity;
+            for (const line of lines) {
+                if (line.trim().length === 0) continue;
+                const match = line.match(/^(\\s*)/);
+                if (match) {
+                    minIndent = Math.min(minIndent, match[1].length);
+                }
+            }
+            if (minIndent === Infinity || minIndent === 0) return code;
+            // Remove the common indentation from all lines
+            return lines.map(line => line.slice(minIndent)).join('\\n');
+        }
+
+        function skipLeadingSpaces() {
+            while (state.currentPos < state.code.length && state.code[state.currentPos] === ' ') {
+                const charEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
+                if (charEl) charEl.className = 'char correct';
+                state.currentPos++;
+            }
+            const nextEl = document.querySelector(\`[data-idx="\${state.currentPos}"]\`);
+            if (nextEl) nextEl.className = 'char current';
+        }
+
         function renderLoading(message) {
             const app = document.getElementById('app');
             app.innerHTML = \`
@@ -1528,7 +1554,7 @@ export class CodeTypePanel {
         }
 
         function renderEditor(code) {
-            state.code = code;
+            state.code = normalizeIndentation(code);
             state.currentPos = 0;
             state.errors = 0;
             state.startTime = null;
@@ -1625,7 +1651,11 @@ export class CodeTypePanel {
 
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (expectedChar === '\\n') handleChar('\\n');
+                    if (expectedChar === '\\n') {
+                        handleChar('\\n');
+                        skipLeadingSpaces();
+                        renderCode();
+                    }
                     return;
                 }
 
@@ -2008,7 +2038,7 @@ export class CodeTypePanel {
                     break;
 
                 case 'gameStart':
-                    state.code = message.data.codeSnippet;
+                    state.code = normalizeIndentation(message.data.codeSnippet);
                     state.currentPos = 0;
                     state.errors = 0;
                     state.startTime = Date.now();
@@ -2190,7 +2220,11 @@ export class CodeTypePanel {
 
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    if (expectedChar === '\\n') handleMultiplayerChar('\\n');
+                    if (expectedChar === '\\n') {
+                        handleMultiplayerChar('\\n');
+                        skipLeadingSpaces();
+                        renderCode();
+                    }
                     return;
                 }
 
