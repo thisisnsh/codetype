@@ -36,8 +36,6 @@ let cachedFirestore: Firestore | null = null;
 let cachedAuth: Auth | null = null;
 let serviceAuthPromise: Promise<void> | null = null;
 
-let cachedPublicKeys: Record<string, string> | null = null;
-let publicKeysCacheExpiry: number = 0;
 
 /**
  * Parse Firebase config from environment
@@ -103,39 +101,43 @@ function getFirestoreClient(env: Env): Firestore {
   return cachedFirestore;
 }
 
-const FIREBASE_PUBLIC_KEYS_URL =
-  'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
+const FIREBASE_JWK_URL =
+  'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
+
+interface JWK {
+  kid: string;
+  kty: string;
+  alg: string;
+  use: string;
+  n: string;
+  e: string;
+}
+
+let cachedJwks: JWK[] | null = null;
+let jwksCacheExpiry: number = 0;
 
 /**
- * Fetch Firebase public keys for JWT verification from Google
- * Keys are cached based on cache-control headers
+ * Fetch Firebase public keys in JWK format from Google
+ * Keys are cached for 1 hour
  */
-async function getPublicKeys(): Promise<Record<string, string>> {
+async function getJwks(): Promise<JWK[]> {
   const now = Date.now();
-  if (cachedPublicKeys && now < publicKeysCacheExpiry) {
-    return cachedPublicKeys;
+  if (cachedJwks && now < jwksCacheExpiry) {
+    return cachedJwks;
   }
 
-  const response = await fetch(FIREBASE_PUBLIC_KEYS_URL);
+  const response = await fetch(FIREBASE_JWK_URL);
   if (!response.ok) {
-    if (cachedPublicKeys) {
-      return cachedPublicKeys;
+    if (cachedJwks) {
+      return cachedJwks;
     }
     throw new Error('Failed to fetch Firebase public keys');
   }
 
-  const cacheControl = response.headers.get('cache-control');
-  let maxAge = 3600;
-  if (cacheControl) {
-    const match = cacheControl.match(/max-age=(\d+)/);
-    if (match) {
-      maxAge = parseInt(match[1], 10);
-    }
-  }
-
-  cachedPublicKeys = await response.json();
-  publicKeysCacheExpiry = now + maxAge * 1000;
-  return cachedPublicKeys!;
+  const data = (await response.json()) as { keys: JWK[] };
+  cachedJwks = data.keys;
+  jwksCacheExpiry = now + 3600 * 1000; // Cache for 1 hour
+  return cachedJwks;
 }
 
 function base64UrlEncode(data: string | Uint8Array): string {
@@ -245,22 +247,16 @@ export async function verifyIdToken(
     throw new Error('Invalid token issuer');
   }
 
-  const publicKeys = await getPublicKeys();
-  const publicKey = publicKeys[header.kid];
+  const jwks = await getJwks();
+  const jwk = jwks.find((k) => k.kid === header.kid);
 
-  if (!publicKey) {
+  if (!jwk) {
     throw new Error('Public key not found');
   }
 
-  const pemContents = publicKey
-    .replace('-----BEGIN CERTIFICATE-----', '')
-    .replace('-----END CERTIFICATE-----', '')
-    .replace(/\s/g, '');
-
-  const binaryDer = Uint8Array.from(atob(pemContents), (c) => c.charCodeAt(0));
   const cryptoKey = await crypto.subtle.importKey(
-    'spki',
-    binaryDer,
+    'jwk',
+    jwk,
     { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
     false,
     ['verify']
