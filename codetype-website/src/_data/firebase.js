@@ -1,11 +1,19 @@
 module.exports = function() {
+  // FIREBASE_PUBLIC_CONFIG is a JSON string set during build via GitHub Actions
+  const configJson = process.env.FIREBASE_PUBLIC_CONFIG || '{}';
+  let config = {};
+
+  try {
+    config = JSON.parse(configJson);
+  } catch (e) {
+    console.warn('Failed to parse FIREBASE_PUBLIC_CONFIG:', e.message);
+  }
+
   return {
-    apiKey: process.env.FIREBASE_API_KEY || "",
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN || "",
-    projectId: process.env.FIREBASE_PROJECT_ID || "",
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET || "",
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || "",
-    appId: process.env.FIREBASE_APP_ID || "",
-    apiBase: process.env.API_BASE || "https://codetype-api.thisisnsh.workers.dev"
+    apiKey: config.apiKey || '',
+    authDomain: config.authDomain || '',
+    projectId: config.projectId || '',
+    appId: config.appId || '',
+    apiBase: 'https://codetype-api.thisisnsh.workers.dev'
   };
 };

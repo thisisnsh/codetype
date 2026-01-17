@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { AuthService } from './auth';
 
-const API_BASE = process.env.CODETYPE_API_URL || '';
-const OFFLINE_MODE = !API_BASE;
+const API_BASE = 'https://codetype-api.thisisnsh.workers.dev';
+const OFFLINE_MODE = false;
 
 
 export interface GameResult {

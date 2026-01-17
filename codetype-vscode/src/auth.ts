@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
-const API_BASE = process.env.CODETYPE_API_URL || '';
-const AUTH_URL = process.env.CODETYPE_AUTH_URL || 'https://codetype.ai';
+const API_BASE = 'https://codetype-api.thisisnsh.workers.dev';
+const AUTH_URL = 'https://codetype.ai';
 
 export interface AuthUser {
     uid: string;

@@ -42,14 +42,7 @@ let cachedPublicKeys: Record<string, string> | null = null;
  * Parse Firebase config from environment
  */
 export function getFirebaseConfig(env: Env): FirebaseConfig {
-  try {
-    return JSON.parse(env.FIREBASE_CONFIG);
-  } catch {
-    return {
-      projectId: env.FIREBASE_PROJECT_ID,
-      apiKey: env.FIREBASE_API_KEY,
-    };
-  }
+  return JSON.parse(env.FIREBASE_CONFIG);
 }
 
 function getFirebaseApp(env: Env): FirebaseApp {

@@ -12,16 +12,12 @@ tag = "v1"
 new_sqlite_classes = ["GameRoom"]
 
 [vars]
-ENVIRONMENT = "production"
-# Set these values after creating your Firebase project
-FIREBASE_PROJECT_ID = "your-firebase-project-id"
-FIREBASE_API_KEY = "your-firebase-api-key"
 # Optional: CORS allowlist (comma-separated), e.g. "https://codetype.ai,https://www.codetype.ai"
 # ALLOWED_ORIGINS = "https://codetype.ai"
 # Optional: rate limit per minute per IP
 # RATE_LIMIT_PER_MINUTE = "120"
-# Set FIREBASE_CONFIG secret via: wrangler secret put FIREBASE_CONFIG
-# The secret should be a JSON string with the Firebase config plus serviceAccount:
-# {"projectId":"...","apiKey":"...","authDomain":"...","appId":"...","serviceAccount":{"client_email":"...","private_key":"..."}}
-# Set FIREBASE_JWT_CERTS secret via: wrangler secret put FIREBASE_JWT_CERTS
-# The secret should be a JSON map of key ID to PEM certificate
+
+# Required secrets (set via GitHub Actions or wrangler secret put):
+# FIREBASE_CONFIG - JSON string containing full Firebase config:
+#   {"projectId":"...","apiKey":"...","authDomain":"...","appId":"...","serviceAccount":{"client_email":"...","private_key":"..."}}
+# FIREBASE_JWT_CERTS - JSON map of key ID to PEM certificate for token verification

@@ -98,17 +98,8 @@ breadcrumb:
     inMemoryPersistence
   } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
-  // Firebase config - will be loaded from API or embedded
-  const firebaseConfig = window.FIREBASE_CONFIG || {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-    storageBucket: "",
-    messagingSenderId: "",
-    appId: ""
-  };
-
-  const API_BASE = window.API_BASE || 'https://codetype-api.thisisnsh.workers.dev';
+  const API_BASE = window.API_BASE;
+  const firebaseConfig = window.FIREBASE_CONFIG;
 
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);

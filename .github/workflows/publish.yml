@@ -95,20 +95,19 @@ jobs:
       - name: Install worker dependencies
         run: npm install
 
-      - name: Inject KV namespace id
-        run: |
-          if [ -z "${CODETYPE_KV_ID}" ]; then
-            echo "CODETYPE_KV_ID secret is missing." >&2
-            exit 1
-          fi
-          sed -i "s/your-kv-namespace-id/${CODETYPE_KV_ID}/" wrangler.toml
-        env:
-          CODETYPE_KV_ID: ${{ secrets.CODETYPE_KV_ID }}
-
       - name: Deploy Cloudflare Worker
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Set Worker Secrets
+        run: |
+          echo "$FIREBASE_CONFIG" | npx wrangler secret put FIREBASE_CONFIG
+          echo "$FIREBASE_JWT_CERTS" | npx wrangler secret put FIREBASE_JWT_CERTS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          FIREBASE_CONFIG: ${{ secrets.FIREBASE_CONFIG }}
+          FIREBASE_JWT_CERTS: ${{ secrets.FIREBASE_JWT_CERTS }}
 
   deploy-website:
     runs-on: ubuntu-latest
@@ -133,6 +132,8 @@ jobs:
 
       - name: Build website
         run: npm run build
+        env:
+          FIREBASE_PUBLIC_CONFIG: ${{ secrets.FIREBASE_PUBLIC_CONFIG }}
 
       - name: Deploy Website
         uses: peaceiris/actions-gh-pages@v3
