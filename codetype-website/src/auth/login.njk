@@ -95,16 +95,23 @@ breadcrumb:
     createUserWithEmailAndPassword,
     onAuthStateChanged,
     setPersistence,
+    browserLocalPersistence,
     inMemoryPersistence
   } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const API_BASE = window.API_BASE;
   const firebaseConfig = window.FIREBASE_CONFIG;
 
+  // Check if coming from extension
+  const urlParams = new URLSearchParams(window.location.search);
+  const source = urlParams.get('source');
+  const isFromExtension = source === 'extension';
+
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  setPersistence(auth, inMemoryPersistence);
+  // Use in-memory for extension (token passed via URL), local storage for web
+  setPersistence(auth, isFromExtension ? inMemoryPersistence : browserLocalPersistence);
   const googleProvider = new GoogleAuthProvider();
 
   // UI Elements
@@ -115,11 +122,6 @@ breadcrumb:
   const formError = document.getElementById('form-error');
   const usernameError = document.getElementById('username-error');
   const successMessage = document.getElementById('success-message');
-
-  // Check if coming from extension
-  const urlParams = new URLSearchParams(window.location.search);
-  const source = urlParams.get('source');
-  const isFromExtension = source === 'extension';
 
   let isSignUp = false;
 

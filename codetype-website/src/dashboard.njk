@@ -96,14 +96,14 @@ breadcrumb:
 
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
-  import { getAuth, onAuthStateChanged, signOut, setPersistence, inMemoryPersistence } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+  import { getAuth, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const API_BASE = window.API_BASE;
   const firebaseConfig = window.FIREBASE_CONFIG;
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  setPersistence(auth, inMemoryPersistence);
+  setPersistence(auth, browserLocalPersistence);
 
   const loadingEl = document.getElementById('dashboard-loading');
   const authEl = document.getElementById('dashboard-auth');
