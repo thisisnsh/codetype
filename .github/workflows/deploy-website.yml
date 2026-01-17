@@ -38,6 +38,8 @@ jobs:
 
       - name: Build website
         run: npm run build
+        env:
+          FIREBASE_PUBLIC_CONFIG: ${{ secrets.FIREBASE_PUBLIC_CONFIG }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
