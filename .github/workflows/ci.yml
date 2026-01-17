@@ -96,7 +96,7 @@ jobs:
           name: website
           path: codetype-website/_site/
 
-  release:
+  create-artifacts:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [build-extension, test-extension, build-website]
     runs-on: ubuntu-latest
