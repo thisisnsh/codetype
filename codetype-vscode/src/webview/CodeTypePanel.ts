@@ -129,7 +129,7 @@ export class CodeTypePanel {
                 break;
 
             case 'gameFinished':
-                this._api.submitScore(message.result);
+                const submitResult = await this._api.submitScore(message.result);
                 const stats = this._api.getLocalStats();
                 this._panel.webview.postMessage({
                     type: 'showResults',
@@ -138,7 +138,9 @@ export class CodeTypePanel {
                         avgWpm: stats.gamesPlayed > 0 ? Math.round(stats.totalWpm / stats.gamesPlayed) : 0,
                         bestWpm: stats.bestWpm,
                         gamesPlayed: stats.gamesPlayed
-                    }
+                    },
+                    sessionSaved: submitResult.saved,
+                    saveError: submitResult.error
                 });
                 break;
 
@@ -1578,9 +1580,14 @@ export class CodeTypePanel {
                             </div>
                         </div>
                     </div>
-                    <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
-                        New Snippet
-                    </button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="refresh-btn" onclick="refreshCode()" title="Get new code snippet">
+                            New Snippet
+                        </button>
+                        <button class="refresh-btn" onclick="endGame()" title="End game and save progress" style="background: var(--vscode-button-background); color: var(--vscode-button-foreground);">
+                            End Game
+                        </button>
+                    </div>
                 </div>
                 <div class="editor-container">
                     <div class="line-numbers" id="lineNumbers"></div>
@@ -1731,8 +1738,29 @@ export class CodeTypePanel {
             vscode.postMessage({ type: 'gameFinished', result });
         }
 
-        function renderResults(result, stats) {
+        function endGame() {
+            // End game early - save current progress
+            if (!state.startTime || state.currentPos === 0) {
+                // User hasn't started typing yet, just go back to menu
+                goToMenu();
+                return;
+            }
+
+            const result = {
+                wpm: calculateWPM(),
+                accuracy: Math.round((state.currentPos / (state.currentPos + state.errors)) * 100),
+                time: (Date.now() - state.startTime) / 1000,
+                charsTyped: state.currentPos,
+                totalChars: state.code.length
+            };
+            vscode.postMessage({ type: 'gameFinished', result });
+        }
+
+        function renderResults(result, stats, sessionSaved, saveError) {
             const app = document.getElementById('app');
+            const saveStatus = sessionSaved
+                ? '<span style="color: var(--vscode-testing-iconPassed);">Session saved</span>'
+                : '<span style="color: var(--vscode-testing-iconFailed);">' + (saveError || 'Session not saved') + '</span>';
             app.innerHTML = \`
                 <div class="results-overlay">
                     <div class="results-card">
@@ -1752,6 +1780,7 @@ export class CodeTypePanel {
                                 <div class="result-stat-label">Characters</div>
                             </div>
                         </div>
+                        <div style="margin-top: 12px; font-size: 11px;">\${saveStatus}</div>
                         <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--vscode-panel-border);">
                             <div style="color: var(--vscode-descriptionForeground); font-size: 11px; margin-bottom: 8px;">Your Stats</div>
                             <div style="display: flex; gap: 20px; justify-content: flex-start;">
@@ -2092,6 +2121,14 @@ export class CodeTypePanel {
             \`).join('');
 
             app.innerHTML = \`
+                <div class="editor-header">
+                    <div class="editor-header-left">
+                        <div style="color: var(--vscode-descriptionForeground); font-size: 12px;">
+                            Room: <span style="color: var(--vscode-textLink-foreground); font-weight: 600;">\${state.roomCode}</span>
+                        </div>
+                    </div>
+                    <button class="refresh-btn" onclick="leaveLobby()">Leave Room</button>
+                </div>
                 <div class="lobby-container">
                     <div style="color: var(--vscode-descriptionForeground); font-size: 12px;">Room Code</div>
                     <div class="room-code">\${state.roomCode}</div>
@@ -2181,6 +2218,7 @@ export class CodeTypePanel {
                             </div>
                         </div>
                     </div>
+                    <button class="refresh-btn" onclick="leaveLobby()">Leave Room</button>
                 </div>
                 <div style="padding: 8px 16px; border-bottom: 1px solid var(--vscode-panel-border);">
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
@@ -2351,6 +2389,18 @@ export class CodeTypePanel {
         }
 
         function leaveLobby() {
+            // If in the middle of a game, send finish with current progress
+            if (state.mode === 'multiplayer' && state.startTime && state.wsConnection) {
+                const wpm = calculateWPM();
+                const accuracy = state.currentPos > 0
+                    ? Math.round((state.currentPos / (state.currentPos + state.errors)) * 100)
+                    : 100;
+                state.wsConnection.send(JSON.stringify({
+                    type: 'finish',
+                    data: { wpm, accuracy, charsTyped: state.currentPos }
+                }));
+            }
+
             if (state.wsConnection) {
                 state.wsConnection.close();
                 state.wsConnection = null;
@@ -2370,7 +2420,7 @@ export class CodeTypePanel {
                     renderEditor(message.code);
                     break;
                 case 'showResults':
-                    renderResults(message.result, message.stats);
+                    renderResults(message.result, message.stats, message.sessionSaved, message.saveError);
                     break;
                 case 'stats':
                     state.isAuthenticated = message.isAuthenticated;

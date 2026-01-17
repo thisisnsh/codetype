@@ -63,27 +63,43 @@ export class ApiClient {
 
     /**
      * Submit a game score - uses authenticated endpoint if logged in, otherwise local only.
+     * Returns { saved: boolean, error?: string } to indicate if the session was saved to server.
      */
-    async submitScore(result: GameResult): Promise<void> {
+    async submitScore(result: GameResult): Promise<{ saved: boolean; error?: string }> {
         // Always store in-session
         this.storeLocalScore(result);
 
+        console.log('[CodeType] submitScore called with:', result);
+        console.log('[CodeType] OFFLINE_MODE:', OFFLINE_MODE);
+        console.log('[CodeType] isAuthenticated:', this.authService.isAuthenticated());
+
         if (OFFLINE_MODE) {
-            return;
+            return { saved: false, error: 'Offline mode' };
         }
 
         // Try authenticated submission first
         if (this.authService.isAuthenticated()) {
             try {
+                const user = this.authService.getCurrentUser();
+                console.log('[CodeType] Current user:', user?.uid, user?.email);
+
                 const authHeader = await this.authService.getAuthHeader();
+                console.log('[CodeType] Auth header obtained:', !!authHeader.Authorization);
+
+                const requestBody = JSON.stringify(result);
+                console.log('[CodeType] Sending to:', `${API_BASE}/games`);
+                console.log('[CodeType] Request body:', requestBody);
+
                 const response = await fetch(`${API_BASE}/games`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         ...authHeader
                     },
-                    body: JSON.stringify(result)
+                    body: requestBody
                 });
+
+                console.log('[CodeType] Response status:', response.status);
 
                 if (response.ok) {
                     const data = await response.json() as {
@@ -96,19 +112,32 @@ export class ApiClient {
                             currentStreak: number;
                         };
                     };
+                    console.log('[CodeType] Response data:', data);
 
                     // Update local cache with server stats
                     if (data.updatedStats) {
                         this.updateLocalStatsFromServer(data.updatedStats);
                     }
-                    return;
+                    return { saved: true };
+                } else {
+                    const errorText = await response.text();
+                    console.error('[CodeType] Error response:', response.status, errorText);
+                    try {
+                        const errorData = JSON.parse(errorText) as { error?: string };
+                        return { saved: false, error: errorData.error || `Server error: ${response.status}` };
+                    } catch {
+                        return { saved: false, error: `Server error: ${response.status}` };
+                    }
                 }
             } catch (error) {
-                console.warn('Failed to submit authenticated score:', error);
+                console.error('[CodeType] Exception during submit:', error);
+                return { saved: false, error: error instanceof Error ? error.message : 'Network error' };
             }
         }
 
         // Anonymous mode stays local only.
+        console.log('[CodeType] Not authenticated, skipping server save');
+        return { saved: false, error: 'Not authenticated - sign in to save progress' };
     }
 
     private storeLocalScore(result: GameResult) {

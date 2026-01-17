@@ -93,10 +93,32 @@ export class AuthService {
      */
     async getAuthToken(): Promise<string | null> {
         if (!this.authState.token) {
+            console.log('[CodeType Auth] No token stored');
             return null;
         }
 
-        // Tokens expire after 1 hour; prompt re-auth if verification fails.
+        // Check if token might be expired (Firebase tokens expire after 1 hour)
+        try {
+            const parts = this.authState.token.split('.');
+            if (parts.length === 3) {
+                const payload = JSON.parse(atob(parts[1]));
+                const expTime = payload.exp * 1000; // Convert to milliseconds
+                const now = Date.now();
+                console.log('[CodeType Auth] Token expires:', new Date(expTime).toISOString());
+                console.log('[CodeType Auth] Current time:', new Date(now).toISOString());
+                if (now >= expTime) {
+                    console.warn('[CodeType Auth] Token has expired! Please sign in again.');
+                    // Token is expired, clear auth state
+                    this.authState = { isAuthenticated: false, user: null, token: null };
+                    this._onAuthStateChanged.fire(this.authState);
+                    vscode.window.showWarningMessage('Your session has expired. Please sign in again.');
+                    return null;
+                }
+            }
+        } catch (e) {
+            console.warn('[CodeType Auth] Failed to parse token expiry:', e);
+        }
+
         return this.authState.token;
     }
 
