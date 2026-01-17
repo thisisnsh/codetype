@@ -119,6 +119,7 @@ breadcrumb:
   const successMessage = document.getElementById('success-message');
 
   let isSignUp = false;
+  let authInProgress = false;
 
   // Toggle sign up/sign in
   document.getElementById('toggle-signup').addEventListener('click', (e) => {
@@ -205,6 +206,9 @@ breadcrumb:
   });
 
   async function handleAuthSuccess(user) {
+    if (authInProgress) return;
+    authInProgress = true;
+
     loadingEl.style.display = 'flex';
     formEl.style.display = 'none';
 
@@ -228,11 +232,13 @@ breadcrumb:
         // Show username setup
         loadingEl.style.display = 'none';
         usernameSetupEl.style.display = 'block';
+        authInProgress = false;
       } else {
         // Complete auth
         completeAuth(user, token);
       }
     } catch (error) {
+      authInProgress = false;
       loadingEl.style.display = 'none';
       formEl.style.display = 'block';
       showError(formError, error.message);
