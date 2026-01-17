@@ -181,7 +181,7 @@ breadcrumb:
 
     try {
       usernameError.style.display = 'none';
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
 
       const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
@@ -209,7 +209,7 @@ breadcrumb:
     formEl.style.display = 'none';
 
     try {
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
 
       // Verify token with backend
       const response = await fetch(`${API_BASE}/auth/verify`, {
@@ -277,9 +277,14 @@ breadcrumb:
 
   // Check auth state on load
   onAuthStateChanged(auth, async (user) => {
-    if (user && !isFromExtension) {
-      // Already signed in, redirect to dashboard
-      window.location.href = '/dashboard/';
+    if (user) {
+      if (isFromExtension) {
+        // Already signed in, proceed with extension auth flow
+        await handleAuthSuccess(user);
+      } else {
+        // Already signed in, redirect to dashboard
+        window.location.href = '/dashboard/';
+      }
     } else {
       loadingEl.style.display = 'none';
       formEl.style.display = 'block';
