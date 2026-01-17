@@ -105,7 +105,7 @@
             </svg>
             <span>dashboard.ts</span>
           </a>
-          <a href="/auth/login/" class="file-item" style="padding-left: 48px;">
+          <a href="/auth/login/" id="sidebar-login" class="file-item" style="padding-left: 48px;">
             <svg class="icon json" viewBox="0 0 16 16" aria-hidden="true">
               <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
               <text x="8" y="11" text-anchor="middle" font-size="7" font-weight="700" font-family="'Fira Code', monospace" fill="#0b0f14">{}</text>
@@ -325,5 +325,19 @@
   </div>
 
   <script src="/assets/js/main.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      const loginLink = document.getElementById('sidebar-login');
+      if (loginLink) {
+        loginLink.style.display = user ? 'none' : '';
+      }
+    });
+  </script>
 </body>
 </html>

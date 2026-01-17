@@ -105,7 +105,7 @@
             </svg>
             <span>dashboard.ts</span>
           </a>
-          <a href="/auth/login/" class="file-item" style="padding-left: 48px;">
+          <a href="/auth/login/" id="sidebar-login" class="file-item" style="padding-left: 48px;">
             <svg class="icon json" viewBox="0 0 16 16" aria-hidden="true">
               <rect x="1" y="1" width="14" height="14" rx="2" fill="currentColor"/>
               <text x="8" y="11" text-anchor="middle" font-size="7" font-weight="700" font-family="'Fira Code', monospace" fill="#0b0f14">{}</text>
@@ -238,18 +238,20 @@
     GoogleAuthProvider,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
-    onAuthStateChanged,
-    setPersistence,
-    inMemoryPersistence
+    onAuthStateChanged
   } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
   const API_BASE = window.API_BASE;
   const firebaseConfig = window.FIREBASE_CONFIG;
 
-  // Initialize Firebase
+  // Check if coming from extension
+  const urlParams = new URLSearchParams(window.location.search);
+  const source = urlParams.get('source');
+  const isFromExtension = source === 'extension';
+
+  // Initialize Firebase (uses default localStorage persistence)
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  setPersistence(auth, inMemoryPersistence);
   const googleProvider = new GoogleAuthProvider();
 
   // UI Elements
@@ -261,12 +263,8 @@
   const usernameError = document.getElementById('username-error');
   const successMessage = document.getElementById('success-message');
 
-  // Check if coming from extension
-  const urlParams = new URLSearchParams(window.location.search);
-  const source = urlParams.get('source');
-  const isFromExtension = source === 'extension';
-
   let isSignUp = false;
+  let authInProgress = false;
 
   // Toggle sign up/sign in
   document.getElementById('toggle-signup').addEventListener('click', (e) => {
@@ -329,7 +327,7 @@
 
     try {
       usernameError.style.display = 'none';
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
 
       const response = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
@@ -353,11 +351,14 @@
   });
 
   async function handleAuthSuccess(user) {
+    if (authInProgress) return;
+    authInProgress = true;
+
     loadingEl.style.display = 'flex';
     formEl.style.display = 'none';
 
     try {
-      const token = await user.getIdToken();
+      const token = await user.getIdToken(true);
 
       // Verify token with backend
       const response = await fetch(`${API_BASE}/auth/verify`, {
@@ -369,18 +370,20 @@
       const data = await response.json();
 
       if (!data.valid) {
-        throw new Error('Token verification failed');
+        throw new Error(data.reason || 'Token verification failed');
       }
 
       if (data.needsUsername) {
         // Show username setup
         loadingEl.style.display = 'none';
         usernameSetupEl.style.display = 'block';
+        authInProgress = false;
       } else {
         // Complete auth
         completeAuth(user, token);
       }
     } catch (error) {
+      authInProgress = false;
       loadingEl.style.display = 'none';
       formEl.style.display = 'block';
       showError(formError, error.message);
@@ -425,9 +428,14 @@
 
   // Check auth state on load
   onAuthStateChanged(auth, async (user) => {
-    if (user && !isFromExtension) {
-      // Already signed in, redirect to dashboard
-      window.location.href = '/dashboard/';
+    if (user) {
+      if (isFromExtension) {
+        // Already signed in, proceed with extension auth flow
+        await handleAuthSuccess(user);
+      } else {
+        // Already signed in, redirect to dashboard
+        window.location.href = '/dashboard/';
+      }
     } else {
       loadingEl.style.display = 'none';
       formEl.style.display = 'block';
@@ -506,5 +514,19 @@
   </div>
 
   <script src="/assets/js/main.js"></script>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
+
+    const app = initializeApp(window.FIREBASE_CONFIG);
+    const auth = getAuth(app);
+
+    onAuthStateChanged(auth, (user) => {
+      const loginLink = document.getElementById('sidebar-login');
+      if (loginLink) {
+        loginLink.style.display = user ? 'none' : '';
+      }
+    });
+  </script>
 </body>
 </html>
