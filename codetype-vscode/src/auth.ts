@@ -198,9 +198,10 @@ export class AuthService {
                 return null;
             }
 
-            const data = await response.json() as { valid: boolean; user?: AuthUser; needsUsername?: boolean };
+            const data = await response.json() as { valid: boolean; user?: AuthUser; needsUsername?: boolean; reason?: string };
 
             if (!data.valid) {
+                console.error('Token verification failed:', data.reason);
                 return null;
             }
 

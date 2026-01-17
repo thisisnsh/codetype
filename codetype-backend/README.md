@@ -24,7 +24,6 @@ No automated tests yet.
 
 ```bash
 wrangler secret put FIREBASE_CONFIG
-wrangler secret put FIREBASE_JWT_CERTS
 ```
 
 3. Deploy:

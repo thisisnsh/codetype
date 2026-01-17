@@ -221,7 +221,7 @@ breadcrumb:
       const data = await response.json();
 
       if (!data.valid) {
-        throw new Error('Token verification failed');
+        throw new Error(data.reason || 'Token verification failed');
       }
 
       if (data.needsUsername) {

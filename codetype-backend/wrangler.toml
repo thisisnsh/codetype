@@ -20,7 +20,6 @@ new_sqlite_classes = ["GameRoom"]
 # Required secrets (set via GitHub Actions or wrangler secret put):
 # FIREBASE_CONFIG - JSON string containing full Firebase config:
 #   {"projectId":"...","apiKey":"...","authDomain":"...","appId":"...","serviceAccount":{"client_email":"...","private_key":"..."}}
-# FIREBASE_JWT_CERTS - JSON map of key ID to PEM certificate for token verification
 
 [observability]
 enabled = true

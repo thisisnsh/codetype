@@ -162,7 +162,7 @@ async function getAuthUser(request: Request, env: Env): Promise<DecodedToken | n
   const config = getFirebaseConfig(env);
 
   try {
-    return await verifyIdToken(token, config.projectId, env);
+    return await verifyIdToken(token, config.projectId);
   } catch {
     return null;
   }
@@ -258,7 +258,7 @@ export default {
         }
 
         try {
-          const decoded = await verifyIdToken(body.idToken, config.projectId, env);
+          const decoded = await verifyIdToken(body.idToken, config.projectId);
 
           const user = await firestoreGet<UserDocument>(env, 'users', decoded.uid);
           const response: VerifyTokenResponse = {
@@ -268,8 +268,10 @@ export default {
           };
 
           return jsonResponse(request, env, response);
-        } catch {
-          return jsonResponse(request, env, { valid: false }, 401);
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          console.error('Token verification failed:', message);
+          return jsonResponse(request, env, { valid: false, reason: message }, 401);
         }
       }
 

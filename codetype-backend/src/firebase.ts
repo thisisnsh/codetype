@@ -37,6 +37,7 @@ let cachedAuth: Auth | null = null;
 let serviceAuthPromise: Promise<void> | null = null;
 
 let cachedPublicKeys: Record<string, string> | null = null;
+let publicKeysCacheExpiry: number = 0;
 
 /**
  * Parse Firebase config from environment
@@ -102,19 +103,38 @@ function getFirestoreClient(env: Env): Firestore {
   return cachedFirestore;
 }
 
+const FIREBASE_PUBLIC_KEYS_URL =
+  'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com';
+
 /**
- * Load Firebase public keys for JWT verification from env
+ * Fetch Firebase public keys for JWT verification from Google
+ * Keys are cached based on cache-control headers
  */
-function getPublicKeys(env: Env): Record<string, string> {
-  if (cachedPublicKeys) {
+async function getPublicKeys(): Promise<Record<string, string>> {
+  const now = Date.now();
+  if (cachedPublicKeys && now < publicKeysCacheExpiry) {
     return cachedPublicKeys;
   }
 
-  if (!env.FIREBASE_JWT_CERTS) {
-    throw new Error('Missing FIREBASE_JWT_CERTS');
+  const response = await fetch(FIREBASE_PUBLIC_KEYS_URL);
+  if (!response.ok) {
+    if (cachedPublicKeys) {
+      return cachedPublicKeys;
+    }
+    throw new Error('Failed to fetch Firebase public keys');
   }
 
-  cachedPublicKeys = JSON.parse(env.FIREBASE_JWT_CERTS);
+  const cacheControl = response.headers.get('cache-control');
+  let maxAge = 3600;
+  if (cacheControl) {
+    const match = cacheControl.match(/max-age=(\d+)/);
+    if (match) {
+      maxAge = parseInt(match[1], 10);
+    }
+  }
+
+  cachedPublicKeys = await response.json();
+  publicKeysCacheExpiry = now + maxAge * 1000;
   return cachedPublicKeys!;
 }
 
@@ -189,12 +209,11 @@ async function createCustomToken(
 }
 
 /**
- * Verify Firebase ID token (JWT) using public keys from env
+ * Verify Firebase ID token (JWT) using public keys fetched from Google
  */
 export async function verifyIdToken(
   idToken: string,
-  projectId: string,
-  env: Env
+  projectId: string
 ): Promise<DecodedToken> {
   const parts = idToken.split('.');
   if (parts.length !== 3) {
@@ -226,7 +245,7 @@ export async function verifyIdToken(
     throw new Error('Invalid token issuer');
   }
 
-  const publicKeys = getPublicKeys(env);
+  const publicKeys = await getPublicKeys();
   const publicKey = publicKeys[header.kid];
 
   if (!publicKey) {

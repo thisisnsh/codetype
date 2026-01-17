@@ -122,7 +122,6 @@ export interface FirebaseConfig {
 export interface Env {
   ROOMS: DurableObjectNamespace;
   FIREBASE_CONFIG: string; // JSON string of FirebaseConfig (includes all Firebase settings)
-  FIREBASE_JWT_CERTS: string; // JSON map of key id to PEM certificate
   ALLOWED_ORIGINS?: string; // Comma-separated allowlist for CORS
   RATE_LIMIT_PER_MINUTE?: string;
 }
