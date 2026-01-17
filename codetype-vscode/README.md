@@ -1,43 +1,44 @@
-# CodeType VS Code Extension
+# CodeType
 
-## Requirements
+**Type code for fun while vibe coding.**
 
-- Node.js 18+
-- VS Code 1.85+
+A typing game that lives inside VS Code. It opens as a normal-looking file tab so you can squeeze in a quick round between builds without leaving your editor.
 
-## Develop
+## Features
 
-```bash
-cd codetype-vscode
-npm install
-npm run compile
-```
+**Stealth Mode** — The game disguises itself as a regular code file (`solo.ts`, `team.ts`) so it blends right into your workspace.
 
-Launch the Extension Development Host with `F5` in VS Code.
+**Real Code Snippets** — Practice typing actual code from your own workspace or choose from curated samples across multiple languages.
 
-Optional watch mode:
+**Solo & Team Play** — Play alone to beat your personal best, or create a room and invite teammates with a share code for live multiplayer races.
 
-```bash
-npm run watch
-```
+**Stats & Streaks** — Track your WPM, accuracy, and daily streaks locally. Sign in to sync your progress and compete on global leaderboards.
 
-## Test
+**Themes** — Choose from three themes: Stealth, Minimal, or Hacker.
 
-```bash
-npm test
-npm run test:unit
-npm run lint
-```
+**Typing Sounds** — Optional keyboard sounds for extra immersion.
 
-## Release
+## Quick Start
 
-```bash
-npm run vscode:prepublish
-npx vsce package
-```
+1. Press `Cmd+Shift+T` (Mac) or `Ctrl+Shift+T` (Windows/Linux)
+2. Choose Solo or Team
+3. Start typing and chase a higher WPM
 
-Publish (requires marketplace credentials):
+Or open the Command Palette and run `CodeType: Play Game`.
 
-```bash
-npx vsce publish
-```
+## Settings
+
+| Setting | Description |
+|---------|-------------|
+| `codetype.theme` | Choose your theme: `stealth`, `minimal`, or `hacker` |
+| `codetype.soundEnabled` | Enable or disable typing sounds |
+| `codetype.useWorkspaceCode` | Use code snippets from your current workspace |
+
+## Scoring
+
+- **WPM**: Characters typed ÷ 5 ÷ minutes elapsed
+- **Accuracy**: Correct keystrokes ÷ total keystrokes
+
+## Feedback & Issues
+
+Found a bug or have a feature request? [Open an issue on GitHub](https://github.com/thisisnsh/codetype/issues).
