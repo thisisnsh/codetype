@@ -29,7 +29,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
-  <script src="/assets/js/firebase-config.js"></script>
+  <script>
+    window.FIREBASE_CONFIG = {
+      apiKey: "AIzaSyAwtim83dMAsS3BFvB4RKbIsmfFyf0vPYU",
+      authDomain: "codetypeai.firebaseapp.com",
+      projectId: "codetypeai",
+      appId: "1:55409043518:web:cb6fbd5b83e498921a496f"
+    };
+    window.API_BASE = "https://codetype-api.thisisnsh.workers.dev";
+  </script>
 </head>
 <body>
   <div class="vscode-window">
@@ -183,11 +191,7 @@
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js';
   import { getAuth, getRedirectResult, setPersistence, inMemoryPersistence } from 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js';
 
-  const firebaseConfig = window.FIREBASE_CONFIG || {
-    apiKey: "",
-    authDomain: "",
-    projectId: "",
-  };
+  const firebaseConfig = window.FIREBASE_CONFIG;
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
