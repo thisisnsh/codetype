@@ -1052,6 +1052,61 @@ export class CodeTypePanel {
             justify-content: center;
         }
 
+        .team-input-row {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: stretch;
+            width: 280px;
+        }
+
+        .team-input-row input {
+            background: var(--vscode-input-background);
+            border: 1px solid var(--vscode-input-border, var(--vscode-panel-border));
+            color: var(--vscode-input-foreground);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 14px;
+            border-radius: 2px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .team-input-row input::placeholder {
+            color: var(--vscode-input-placeholderForeground);
+        }
+
+        .team-input-row input.room-code-input {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .team-input-row input.room-code-input::placeholder {
+            text-transform: none;
+            letter-spacing: normal;
+        }
+
+        .team-input-row button {
+            padding: 8px 12px;
+            white-space: nowrap;
+            width: 100%;
+            box-sizing: border-box;
+            text-align: left;
+        }
+
+        .team-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .team-separator {
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+            margin: 8px 0;
+        }
+
         .multiplayer-results {
             display: flex;
             flex-direction: column;
@@ -1840,26 +1895,32 @@ export class CodeTypePanel {
             state.mode = 'team';
             const app = document.getElementById('app');
             app.innerHTML = \`
-                <div class="menu-container">
-                    <div class="menu-title">Team Game</div>
-                    <div class="menu-subtitle">Race against your team!</div>
-
-                    <div style="margin-bottom: 24px;">
-                        <label style="color: var(--vscode-descriptionForeground); font-size: 12px; display: block; margin-bottom: 8px;">Your display name:</label>
-                        <input type="text" id="displayNameInput" value="\${state.displayName}"
-                            style="background: var(--vscode-input-background); border: 1px solid var(--vscode-input-border, var(--vscode-panel-border)); color: var(--vscode-input-foreground); padding: 8px 12px; font-family: inherit; font-size: 14px; width: 200px; border-radius: 2px;"
-                            placeholder="Enter your name" />
-                    </div>
-
-                    <div class="menu-buttons">
-                        <button class="menu-btn menu-btn-primary" onclick="createRoom()">Create Room</button>
-                    </div>
-
-                    <div style="margin-top: 32px; text-align: left;">
-                        <div style="color: var(--vscode-descriptionForeground); font-size: 12px; margin-bottom: 12px;">Or join an existing room:</div>
-                        <div class="join-room-input">
-                            <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" />
-                            <button class="menu-btn menu-btn-primary" onclick="joinRoom()">Join</button>
+                <div class="welcome-shell">
+                    <div class="welcome-container">
+                        <div class="welcome-header">
+                            <div class="welcome-title">CodeType Teams</div>
+                            <div class="welcome-subtitle">Race against your friends</div>
+                        </div>
+                        <div class="welcome-grid" style="grid-template-columns: 1fr;">
+                            <div class="welcome-column">
+                                <div class="welcome-section">
+                                    <div class="welcome-section-title">Play</div>
+                                    <div class="team-form">
+                                        <div class="team-input-row">
+                                            <input type="text" id="displayNameInput" placeholder="Display name" />
+                                            <button class="menu-btn menu-btn-primary" onclick="createRoom()">Create Room</button>
+                                        </div>
+                                        <div class="team-separator">or join an existing room</div>
+                                        <div class="team-input-row">
+                                            <input type="text" id="roomCodeInput" class="room-code-input" placeholder="Room code" maxlength="6" />
+                                            <button class="menu-btn menu-btn-primary" onclick="joinRoom()">Join Room</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="welcome-footer">
+                            <button class="footer-link" onclick="goToMenu()">Back to Menu</button>
                         </div>
                     </div>
                 </div>
